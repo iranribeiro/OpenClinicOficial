@@ -18,7 +18,7 @@ import {
   APP_RESOURCE_MANIFEST,
 } from '@openclinic/core/shared';
 import { t, useTranslation } from '../i18n/index.js';
-import type { MenuItem, AclPermissionRecord } from '../types/auth.js';
+import type { MenuItem, AclPermissionRecord } from '../arch/types/auth.js';
 import { AlertBanner, AlertBannerType } from '../components/AlertBanner.js';
 import {
   type ResourceTreeNode,
@@ -35,13 +35,13 @@ import { AuditLogsView } from '../arch/pages/AuditLogsView.js';
 import { ApplicationSettingsView } from '../arch/pages/ApplicationSettingsView.js';
 import { PlatformSettingsView } from '../arch/pages/PlatformSettingsView.js';
 import { HelpSupportView } from '../arch/pages/HelpSupportView.js';
-import { OrganizationsView } from '../arch/pages/OrganizationsView.js';
 import { TenantsManagementView } from '../arch/pages/TenantsManagementView.js';
 import { ApiKeysView } from '../arch/pages/ApiKeysView.js';
 import { IntegrationsWebhooksView } from '../arch/pages/IntegrationsWebhooksView.js';
 import { PoliciesTermsView } from '../arch/pages/PoliciesTermsView.js';
 
 // Business Pages
+import { OrganizationsView } from '../business/registries/OrganizationsView.js';
 import { AttendanceQueueView } from '../business/attendance/AttendanceQueueView.js';
 import { ScheduleView } from '../business/attendance/ScheduleView.js';
 import { PatientsView } from '../business/clinical/PatientsView.js';
@@ -50,13 +50,71 @@ import { ConsultationsView } from '../business/clinical/ConsultationsView.js';
 import { ProceduresView } from '../business/registries/ProceduresView.js';
 import { HealthPlansView } from '../business/registries/HealthPlansView.js';
 import { PractitionersView } from '../business/registries/PractitionersView.js';
+import { StaffView } from '../business/registries/StaffView.js';
 import { CashFlowView, PayablesReceivablesView, BillingTissView } from '../business/financial/FinancialViews.js';
 import { MetricsView } from '../business/management/MetricsView.js';
 import { ReportsView } from '../business/management/ReportsView.js';
 
 
-const ROUTE_TO_TAB: Record<string, string> = {};
-const TAB_TO_ROUTE: Record<string, string> = {};
+const ROUTE_TO_TAB: Record<string, string> = {
+  // Option A Routes
+  '/attendance/schedule': 'attendance_schedule',
+  '/attendance/queue': 'attendance_queue',
+  '/clinical/patients': 'clinical_patients',
+  '/clinical/consultations': 'clinical_consultations',
+  '/clinical/records': 'clinical_records',
+  '/financial/billing': 'financial_billing',
+  '/financial/cash-flow': 'financial_cashflow',
+  '/financial/payables': 'financial_payables',
+  '/registries/organizations': 'registries_organizations',
+  '/registries/practitioners': 'registries_practitioners',
+  '/registries/staff': 'registries_staff',
+  '/registries/health-plans': 'registries_health_plans',
+  '/registries/procedures': 'registries_procedures',
+  '/management/metrics': 'management_metrics',
+  '/management/reports': 'management_reports',
+  '/system/settings': 'system_settings',
+  '/system/users': 'system_users',
+  '/system/audit': 'system_audit',
+  '/platform/tenants': 'platform_tenants',
+  '/platform/settings': 'platform_settings',
+  '/platform/api-keys': 'platform_api_keys',
+  '/platform/integrations': 'platform_integrations',
+  '/platform/policies': 'platform_policies',
+  '/account/profile': 'account_profile',
+  '/account/security': 'account_security',
+  '/account/help': 'account_help',
+};
+
+const TAB_TO_ROUTE: Record<string, string> = {
+  // Option A Tabs
+  'attendance_schedule': '/attendance/schedule',
+  'attendance_queue': '/attendance/queue',
+  'clinical_patients': '/clinical/patients',
+  'clinical_consultations': '/clinical/consultations',
+  'clinical_records': '/clinical/records',
+  'financial_billing': '/financial/billing',
+  'financial_cashflow': '/financial/cash-flow',
+  'financial_payables': '/financial/payables',
+  'registries_organizations': '/registries/organizations',
+  'registries_practitioners': '/registries/practitioners',
+  'registries_staff': '/registries/staff',
+  'registries_health_plans': '/registries/health-plans',
+  'registries_procedures': '/registries/procedures',
+  'management_metrics': '/management/metrics',
+  'management_reports': '/management/reports',
+  'system_settings': '/system/settings',
+  'system_users': '/system/users',
+  'system_audit': '/system/audit',
+  'platform_tenants': '/platform/tenants',
+  'platform_settings': '/platform/settings',
+  'platform_api_keys': '/platform/api-keys',
+  'platform_integrations': '/platform/integrations',
+  'platform_policies': '/platform/policies',
+  'account_profile': '/account/profile',
+  'account_security': '/account/security',
+  'account_help': '/account/help',
+};
 
 for (const res of APP_RESOURCE_MANIFEST) {
   if (res.route) {
@@ -72,79 +130,82 @@ export default function DashboardPage() {
   const location = useLocation();
 
   // 1. Attendance Permissions
-  const canReadOpSchedule = hasCapability('op_schedule', ResourceAction.READ);
-  const canReadOpAttendance = hasCapability('op_attendance', ResourceAction.READ);
+  const canReadOpSchedule = hasCapability('attendance_schedule', ResourceAction.READ);
+  const canReadOpAttendance = hasCapability('attendance_queue', ResourceAction.READ);
 
   // 2. Clinical Permissions
-  const canReadOpPatients = hasCapability('op_patients', ResourceAction.READ);
-  const canReadOpPep = hasCapability('op_pep', ResourceAction.READ);
-  const canReadOpConsultations = hasCapability('op_consultations', ResourceAction.READ);
+  const canReadOpPatients = hasCapability('clinical_patients', ResourceAction.READ);
+  const canReadOpPep = hasCapability('clinical_records', ResourceAction.READ);
+  const canReadOpConsultations = hasCapability('clinical_consultations', ResourceAction.READ);
 
   // 3. Financial Permissions
-  const canReadOpCashflow = hasCapability('op_cashflow', ResourceAction.READ);
-  const canReadOpPayables = hasCapability('op_payables', ResourceAction.READ);
-  const canReadOpBilling = hasCapability('op_billing', ResourceAction.READ);
+  const canReadOpCashflow = hasCapability('financial_cashflow', ResourceAction.READ);
+  const canReadOpPayables = hasCapability('financial_payables', ResourceAction.READ);
+  const canReadOpBilling = hasCapability('financial_billing', ResourceAction.READ);
 
   // 4. Base Registries Permissions
-  const canReadBaseProcedures = hasCapability('base_procedures', ResourceAction.READ) || hasCapability('op_procedures', ResourceAction.READ);
-  const canReadBaseHealthPlans = hasCapability('base_health_plans', ResourceAction.READ);
-  const canReadBaseStaff = hasCapability('base_staff', ResourceAction.READ) || hasCapability('op_staff', ResourceAction.READ);
+  const canReadBaseOrganizations = hasCapability('registries_organizations', ResourceAction.READ);
+  const canReadBaseProcedures = hasCapability('registries_procedures', ResourceAction.READ);
+  const canReadBaseHealthPlans = hasCapability('registries_health_plans', ResourceAction.READ);
+  const canReadBasePractitioners = hasCapability('registries_practitioners', ResourceAction.READ);
+  const canReadBaseStaff = hasCapability('registries_staff', ResourceAction.READ);
 
   // 5. Management Permissions (BUSINESS Context)
-  const canReadMgmtIndicators = hasCapability('menu_mgmt_indicators', ResourceAction.READ);
-  const canReadMgmtReports = hasCapability('menu_mgmt_reports', ResourceAction.READ);
+  const canReadMgmtIndicators = hasCapability('management_metrics', ResourceAction.READ);
+  const canReadMgmtReports = hasCapability('management_reports', ResourceAction.READ);
 
   // 6. System Permissions (ARCH Context)
-  const canReadSysSettings = hasCapability('menu_sys_settings', ResourceAction.READ);
-  const canReadSysUsers = hasCapability('menu_sys_users', ResourceAction.READ);
-  const canReadSysInstitution = hasCapability('menu_sys_institution', ResourceAction.READ);
-  const canReadSysAudit = hasCapability('menu_sys_audit', ResourceAction.READ);
+  const canReadSysSettings = hasCapability('system_settings', ResourceAction.READ);
+  const canReadSysUsers = hasCapability('system_users', ResourceAction.READ);
+  const canReadSysAudit = hasCapability('system_audit', ResourceAction.READ);
 
   // 7. Platform Permissions (ARCH Context - Exclusive to OWNER)
-  const canReadPlatformSettings = hasCapability('menu_platform_settings', ResourceAction.READ);
-  const canReadPlatformTenants = hasCapability('menu_platform_tenants', ResourceAction.READ);
-  const canReadPlatformApiKeys = hasCapability('menu_platform_api_keys', ResourceAction.READ);
-  const canReadPlatformWebhooks = hasCapability('menu_platform_webhooks', ResourceAction.READ);
-  const canReadPlatformPolicies = hasCapability('menu_platform_policies', ResourceAction.READ);
+  const canReadPlatformSettings = hasCapability('platform_settings', ResourceAction.READ);
+  const canReadPlatformTenants = hasCapability('platform_tenants', ResourceAction.READ);
+  const canReadPlatformApiKeys = hasCapability('platform_api_keys', ResourceAction.READ);
+  const canReadPlatformWebhooks = hasCapability('platform_integrations', ResourceAction.READ);
+  const canReadPlatformPolicies = hasCapability('platform_policies', ResourceAction.READ);
 
   // Determine allowed navigation items
   const allowedNavItems = useMemo(() => {
     const list: string[] = [];
-    if (canReadOpSchedule) list.push('op_schedule');
-    if (canReadOpAttendance) list.push('op_attendance');
-    if (canReadOpPatients) list.push('op_patients');
-    if (canReadOpConsultations) list.push('op_consultations');
-    if (canReadOpPep) list.push('op_pep');
-    if (canReadOpBilling) list.push('op_billing');
-    if (canReadOpCashflow) list.push('op_cashflow');
-    if (canReadOpPayables) list.push('op_payables');
-    if (canReadBaseStaff) list.push('base_staff');
-    if (canReadBaseHealthPlans) list.push('base_health_plans');
-    if (canReadBaseProcedures) list.push('base_procedures');
+    if (canReadOpSchedule) list.push('attendance_schedule');
+    if (canReadOpAttendance) list.push('attendance_queue');
+    if (canReadOpPatients) list.push('clinical_patients');
+    if (canReadOpConsultations) list.push('clinical_consultations');
+    if (canReadOpPep) list.push('clinical_records');
+    if (canReadOpBilling) list.push('financial_billing');
+    if (canReadOpCashflow) list.push('financial_cashflow');
+    if (canReadOpPayables) list.push('financial_payables');
+    if (canReadBaseOrganizations) list.push('registries_organizations');
+    if (canReadBasePractitioners) list.push('registries_practitioners');
+    if (canReadBaseStaff) list.push('registries_staff');
+    if (canReadBaseHealthPlans) list.push('registries_health_plans');
+    if (canReadBaseProcedures) list.push('registries_procedures');
     // Management
-    if (canReadMgmtIndicators) list.push('menu_mgmt_indicators');
-    if (canReadMgmtReports) list.push('menu_mgmt_reports');
+    if (canReadMgmtIndicators) list.push('management_metrics');
+    if (canReadMgmtReports) list.push('management_reports');
     // System
-    if (canReadSysSettings) list.push('menu_sys_settings');
-    if (canReadSysUsers) list.push('menu_sys_users');
-    if (canReadSysInstitution) list.push('menu_sys_institution');
-    if (canReadSysAudit) list.push('menu_sys_audit');
+    if (canReadSysUsers) list.push('system_users');
+    if (canReadSysSettings) list.push('system_settings');
+    if (canReadSysAudit) list.push('system_audit');
     // Platform
-    if (canReadPlatformSettings) list.push('menu_platform_settings');
-    if (canReadPlatformTenants) list.push('menu_platform_tenants');
-    if (canReadPlatformApiKeys) list.push('menu_platform_api_keys');
-    if (canReadPlatformWebhooks) list.push('menu_platform_webhooks');
-    if (canReadPlatformPolicies) list.push('menu_platform_policies');
+    if (canReadPlatformTenants) list.push('platform_tenants');
+    if (canReadPlatformSettings) list.push('platform_settings');
+    if (canReadPlatformApiKeys) list.push('platform_api_keys');
+    if (canReadPlatformWebhooks) list.push('platform_integrations');
+    if (canReadPlatformPolicies) list.push('platform_policies');
 
-    list.push('menu_profile', 'menu_password', 'menu_help');
+    list.push('account_profile', 'account_security', 'account_help');
     return list;
   }, [
     canReadOpSchedule, canReadOpAttendance, canReadOpPatients,
     canReadOpConsultations, canReadOpPep, canReadOpBilling,
-    canReadOpCashflow, canReadOpPayables, canReadBaseStaff,
+    canReadOpCashflow, canReadOpPayables, canReadBaseOrganizations,
+    canReadBasePractitioners, canReadBaseStaff,
     canReadBaseHealthPlans, canReadBaseProcedures,
     canReadMgmtIndicators, canReadMgmtReports,
-    canReadSysSettings, canReadSysUsers, canReadSysInstitution, canReadSysAudit,
+    canReadSysSettings, canReadSysUsers, canReadSysAudit,
     canReadPlatformSettings, canReadPlatformTenants, canReadPlatformApiKeys,
     canReadPlatformWebhooks, canReadPlatformPolicies,
   ]);
@@ -202,8 +263,8 @@ export default function DashboardPage() {
 
   const handleSelectTab = (tabKey: string) => {
     setActiveTab(tabKey);
-    const targetRoute = TAB_TO_ROUTE[tabKey] || '/dashboard';
-    if (location.pathname !== targetRoute) {
+    const targetRoute = TAB_TO_ROUTE[tabKey] || (tabKey === '' ? '/dashboard' : undefined);
+    if (targetRoute && location.pathname !== targetRoute) {
       navigate(targetRoute);
     }
   };
@@ -322,55 +383,55 @@ export default function DashboardPage() {
   const renderActiveContent = () => {
     switch (activeTab) {
       // 1. Attendance
-      case 'op_attendance':
+      case 'attendance_queue':
         return <AttendanceQueueView />;
-      case 'op_schedule':
+      case 'attendance_schedule':
         return <ScheduleView />;
 
       // 2. Clinical
-      case 'op_patients':
+      case 'clinical_patients':
         return <PatientsView />;
-      case 'op_pep':
+      case 'clinical_records':
         return <PepView />;
-      case 'op_consultations':
+      case 'clinical_consultations':
         return <ConsultationsView />;
 
       // 3. Financial
-      case 'op_cashflow':
+      case 'financial_cashflow':
         return <CashFlowView />;
-      case 'op_payables':
+      case 'financial_payables':
         return <PayablesReceivablesView />;
-      case 'op_billing':
+      case 'financial_billing':
         return <BillingTissView />;
 
       // 4. Registries
-      case 'base_procedures':
-      case 'op_procedures':
+      case 'registries_organizations':
+        return <OrganizationsView onNavigateTab={handleSelectTab} />;
+      case 'registries_procedures':
         return <ProceduresView />;
-      case 'base_health_plans':
+      case 'registries_health_plans':
         return <HealthPlansView />;
-      case 'base_staff':
-      case 'op_staff':
-      case 'base_collaborators':
-      case 'op_collaborators':
+      case 'registries_practitioners':
         return <PractitionersView />;
+      case 'registries_staff':
+        return <StaffView />;
 
       // 5. Profile & Security
-      case 'menu_profile':
+      case 'account_profile':
         return <ProfileView user={user} />;
-      case 'menu_password':
+      case 'account_security':
         return <SecurityView />;
 
       // 6. Management (BUSINESS Context)
-      case 'menu_mgmt_indicators':
+      case 'management_metrics':
         return <MetricsView />;
-      case 'menu_mgmt_reports':
+      case 'management_reports':
         return <ReportsView />;
 
       // 7. System (ARCH Context)
-      case 'menu_sys_settings':
-        return <ApplicationSettingsView />;
-      case 'menu_sys_users':
+      case 'system_settings':
+        return <ApplicationSettingsView onNavigateTab={handleSelectTab} user={user} />;
+      case 'system_users':
         return (
           <UsersManagementView
             currentUser={user}
@@ -379,26 +440,23 @@ export default function DashboardPage() {
             onProfileUpdated={fetchProfile}
           />
         );
-      case 'menu_sys_institution':
-      case 'menu_sys_organization':
-        return <OrganizationsView />;
-      case 'menu_sys_audit':
+      case 'system_audit':
         return <AuditLogsView user={user} />;
 
       // 8. Platform (ARCH Context - Exclusive to OWNER)
-      case 'menu_platform_settings':
+      case 'platform_settings':
         return <PlatformSettingsView />;
-      case 'menu_platform_tenants':
+      case 'platform_tenants':
         return <TenantsManagementView onNavigateTab={handleSelectTab} />;
-      case 'menu_platform_api_keys':
+      case 'platform_api_keys':
         return <ApiKeysView />;
-      case 'menu_platform_webhooks':
+      case 'platform_integrations':
         return <IntegrationsWebhooksView />;
-      case 'menu_platform_policies':
+      case 'platform_policies':
         return <PoliciesTermsView />;
 
       // 9. Help
-      case 'menu_help':
+      case 'account_help':
         return <HelpSupportView />;
 
       default:
@@ -451,12 +509,13 @@ export default function DashboardPage() {
 
             {/* Quick Access to Primary Modules */}
             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-              {t('DASHBOARD_SHORTCUTS_TITLE')}
+              <span>⚡</span>
+              <span>{t('DASHBOARD_SHORTCUTS_TITLE')}</span>
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
               {canReadOpSchedule && (
                 <div
-                  onClick={() => handleSelectTab('op_schedule')}
+                  onClick={() => handleSelectTab('attendance_schedule')}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
@@ -477,7 +536,7 @@ export default function DashboardPage() {
 
               {canReadOpAttendance && (
                 <div
-                  onClick={() => handleSelectTab('op_attendance')}
+                  onClick={() => handleSelectTab('attendance_queue')}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
@@ -498,7 +557,7 @@ export default function DashboardPage() {
 
               {canReadOpPatients && (
                 <div
-                  onClick={() => handleSelectTab('op_patients')}
+                  onClick={() => handleSelectTab('clinical_patients')}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
@@ -519,7 +578,7 @@ export default function DashboardPage() {
 
               {canReadBaseStaff && (
                 <div
-                  onClick={() => handleSelectTab('base_staff')}
+                  onClick={() => handleSelectTab('registries_staff')}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
@@ -540,7 +599,7 @@ export default function DashboardPage() {
 
               {canReadSysUsers && (
                 <div
-                  onClick={() => handleSelectTab('menu_sys_users')}
+                  onClick={() => handleSelectTab('system_users')}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
@@ -587,14 +646,15 @@ export default function DashboardPage() {
         canReadOpCashflow={canReadOpCashflow}
         canReadOpPayables={canReadOpPayables}
         canReadOpBilling={canReadOpBilling}
+        canReadBaseOrganizations={canReadBaseOrganizations}
         canReadBaseProcedures={canReadBaseProcedures}
         canReadBaseHealthPlans={canReadBaseHealthPlans}
+        canReadBasePractitioners={canReadBasePractitioners}
         canReadBaseStaff={canReadBaseStaff}
         canReadMgmtIndicators={canReadMgmtIndicators}
         canReadMgmtReports={canReadMgmtReports}
         canReadSysSettings={canReadSysSettings}
         canReadSysUsers={canReadSysUsers}
-        canReadSysInstitution={canReadSysInstitution}
         canReadSysAudit={canReadSysAudit}
         canReadPlatformSettings={canReadPlatformSettings}
         canReadPlatformTenants={canReadPlatformTenants}

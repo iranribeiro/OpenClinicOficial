@@ -7,6 +7,7 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * 14 numeric digits with two Modulo 11 check digits.
  */
 export class Cnpj extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_CNPJ_INVALID' as const;
   private static readonly WEIGHTS_FIRST = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
   private static readonly WEIGHTS_SECOND = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
 

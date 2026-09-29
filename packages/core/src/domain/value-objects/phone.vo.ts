@@ -9,6 +9,8 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * Valid DDD codes range between 11 and 99 (first and second digits != 0).
  */
 export class Phone extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_PHONE_INVALID' as const;
+
   private constructor(value: string) {
     super(value);
   }

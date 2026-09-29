@@ -12,6 +12,7 @@ export interface PasswordValidationResult {
  * Pure domain logic safely usable in both browser (frontend) and server (backend).
  */
 export class PasswordPolicy {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_PASSWORD_POLICY' as const;
   public static readonly MIN_LENGTH = 8;
   public static readonly MAX_LENGTH = 128;
 

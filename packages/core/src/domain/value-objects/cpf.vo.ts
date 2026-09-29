@@ -6,6 +6,8 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * Enforces valid 11-digit format, mod-11 check digits, and sequence validation.
  */
 export class Cpf extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_CPF_INVALID' as const;
+
   private constructor(value: string) {
     super(value);
   }

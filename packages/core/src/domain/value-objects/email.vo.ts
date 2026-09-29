@@ -6,6 +6,8 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * Enforces normalized lowercase format and robust RFC 5322 regex validation.
  */
 export class Email extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_EMAIL_INVALID' as const;
+
   // Robust standard email regex
   private static readonly EMAIL_REGEX =
     /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;

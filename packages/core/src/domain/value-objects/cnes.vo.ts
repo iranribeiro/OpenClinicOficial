@@ -7,6 +7,8 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * Composed of exactly 7 numeric digits.
  */
 export class Cnes extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_CNES_INVALID' as const;
+
   private constructor(value: string) {
     super(value);
   }

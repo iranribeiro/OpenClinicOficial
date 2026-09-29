@@ -7,6 +7,8 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * Composed of exactly 8 numeric digits, formatted as "00000-000".
  */
 export class Cep extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_CEP_INVALID' as const;
+
   private constructor(value: string) {
     super(value);
   }

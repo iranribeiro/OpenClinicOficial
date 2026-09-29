@@ -18,7 +18,14 @@ const formatPhone = (val: string): string => {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 };
 
-export const ApplicationSettingsView: React.FC = () => {
+import type { UserProfile } from '../types/auth.js';
+
+export interface ApplicationSettingsViewProps {
+  onNavigateTab?: (tab: string) => void;
+  user?: UserProfile | null;
+}
+
+export const ApplicationSettingsView: React.FC<ApplicationSettingsViewProps> = () => {
   const { t } = useI18n();
 
   const [loading, setLoading] = useState<boolean>(true);

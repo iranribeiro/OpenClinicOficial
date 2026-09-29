@@ -1,59 +1,173 @@
 import React from 'react';
 import { t } from '../../i18n/index.js';
 
+export interface TooltipProps {
+  content: string;
+  children: React.ReactNode;
+  position?: 'top' | 'bottom';
+  align?: 'center' | 'left' | 'right';
+  maxWidth?: number;
+}
+
+export const Tooltip: React.FC<TooltipProps> = ({
+  content,
+  children,
+  position = 'top',
+  align = 'center',
+  maxWidth = 320,
+}) => {
+  const [showTooltip, setShowTooltip] = React.useState(false);
+
+  if (!content) return <>{children}</>;
+
+  const horizontalPositionStyle: React.CSSProperties =
+    align === 'right'
+      ? { right: 0, left: 'auto', transform: 'none' }
+      : align === 'left'
+      ? { left: 0, right: 'auto', transform: 'none' }
+      : { left: '50%', right: 'auto', transform: 'translateX(-50%)' };
+
+  const arrowHorizontalStyle: React.CSSProperties =
+    align === 'right'
+      ? { right: 16, left: 'auto', transform: 'none' }
+      : align === 'left'
+      ? { left: 16, right: 'auto', transform: 'none' }
+      : { left: '50%', right: 'auto', transform: 'translateX(-50%)' };
+
+  return (
+    <div
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onFocus={() => setShowTooltip(true)}
+      onBlur={() => setShowTooltip(false)}
+    >
+      {children}
+      {showTooltip && (
+        <div
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            ...(position === 'top'
+              ? { bottom: 'calc(100% + 6px)', ...horizontalPositionStyle }
+              : { top: 'calc(100% + 6px)', ...horizontalPositionStyle }),
+            background: '#0f172a',
+            color: '#f8fafc',
+            padding: '8px 12px',
+            borderRadius: 8,
+            fontSize: '0.74rem',
+            fontWeight: 400,
+            lineHeight: 1.45,
+            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.3)',
+            whiteSpace: 'pre-line',
+            width: 'max-content',
+            maxWidth,
+            zIndex: 10000,
+            pointerEvents: 'none',
+            textAlign: 'left',
+          }}
+        >
+          {content}
+          {/* Tooltip Arrow */}
+          <div
+            style={{
+              position: 'absolute',
+              ...(position === 'top'
+                ? {
+                    top: '100%',
+                    ...arrowHorizontalStyle,
+                    borderLeft: '5px solid transparent',
+                    borderRight: '5px solid transparent',
+                    borderTop: '5px solid #0f172a',
+                  }
+                : {
+                    bottom: '100%',
+                    ...arrowHorizontalStyle,
+                    borderLeft: '5px solid transparent',
+                    borderRight: '5px solid transparent',
+                    borderBottom: '5px solid #0f172a',
+                  }),
+              width: 0,
+              height: 0,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const FieldLabelWithTooltip: React.FC<{
   label: string;
   tooltip?: string;
   required?: boolean;
-}> = ({ label, tooltip, required }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}>
-      {label} {required && <span style={{ color: '#dc2626' }}>*</span>}
-    </label>
-    {tooltip && (
-      <span
-        title={tooltip}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 16,
-          height: 16,
-          borderRadius: '50%',
-          background: '#e2e8f0',
-          color: '#475569',
-          fontSize: '0.68rem',
-          fontWeight: 700,
-          cursor: 'help',
-        }}
-      >
-        ℹ️
-      </span>
-    )}
-  </div>
-);
+  tooltipPosition?: 'top' | 'bottom';
+  tooltipAlign?: 'center' | 'left' | 'right';
+  maxWidth?: number;
+}> = ({ label, tooltip, required, tooltipPosition = 'top', tooltipAlign = 'center', maxWidth }) => {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, position: 'relative' }}>
+      <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}>
+        {label} {required && <span style={{ color: '#dc2626' }}>*</span>}
+      </label>
+      {tooltip && (
+        <Tooltip content={tooltip} position={tooltipPosition} align={tooltipAlign} maxWidth={maxWidth}>
+          <span
+            tabIndex={0}
+            role="button"
+            aria-label={tooltip}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 16,
+              height: 16,
+              borderRadius: '50%',
+              background: '#e2e8f0',
+              color: '#475569',
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              cursor: 'help',
+              userSelect: 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            ℹ️
+          </span>
+        </Tooltip>
+      )}
+    </div>
+  );
+};
 
-export const ToggleSwitch: React.FC<{
+export interface ToggleSwitchProps {
   checked: boolean;
   onChange: (val: boolean) => void;
   disabled?: boolean;
   activeText?: string;
   inactiveText?: string;
   title?: string;
-}> = ({
+  tooltip?: string;
+  tooltipPosition?: 'top' | 'bottom';
+  tooltipAlign?: 'center' | 'left' | 'right';
+}
+
+export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   checked,
   onChange,
   disabled = false,
   activeText = t('GLOBAL_STATUS_ACTIVE'),
   inactiveText = t('GLOBAL_STATUS_INACTIVE'),
   title,
+  tooltip,
+  tooltipPosition = 'top',
+  tooltipAlign = 'center',
 }) => {
   const currentStatus = checked ? activeText : inactiveText;
-  const tooltipText = title || currentStatus;
+  const customTooltip = tooltip || title;
 
-  return (
+  const switchElement = (
     <div
-      title={tooltipText}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -81,7 +195,7 @@ export const ToggleSwitch: React.FC<{
       <button
         type="button"
         disabled={disabled}
-        aria-label={tooltipText}
+        aria-label={customTooltip || currentStatus}
         onClick={(e) => {
           e.stopPropagation();
           if (!disabled) onChange(!checked);
@@ -114,4 +228,14 @@ export const ToggleSwitch: React.FC<{
       </button>
     </div>
   );
+
+  if (customTooltip) {
+    return (
+      <Tooltip content={customTooltip} position={tooltipPosition} align={tooltipAlign}>
+        {switchElement}
+      </Tooltip>
+    );
+  }
+
+  return switchElement;
 };

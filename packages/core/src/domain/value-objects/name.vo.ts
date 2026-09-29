@@ -7,6 +7,7 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * and provides helper getters for first name, last name, initials, and shortened display name.
  */
 export class Name extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_NAME_INVALID' as const;
   public static readonly MIN_LENGTH = 2;
   public static readonly MAX_LENGTH = 120;
 

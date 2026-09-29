@@ -76,6 +76,8 @@ const UF_REGION_MAP: Record<BrazilianUfCode, BrazilianRegion> = {
  * Validates the 27 official state abbreviations and exposes geographical regions and full names.
  */
 export class Uf extends ValueObject<BrazilianUfCode> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_UF_INVALID' as const;
+
   private constructor(value: BrazilianUfCode) {
     super(value);
   }

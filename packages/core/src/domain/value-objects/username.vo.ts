@@ -7,6 +7,7 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * and safe alphanumeric characters with dot, underscore, or hyphen separators.
  */
 export class Username extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_USERNAME_INVALID' as const;
   public static readonly MIN_LENGTH = 3;
   public static readonly MAX_LENGTH = 50;
 

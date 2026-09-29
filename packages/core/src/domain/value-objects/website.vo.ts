@@ -6,6 +6,8 @@ import { ValidationError, ErrorCode } from '../../errors/index.js';
  * Enforces secure, standardized HTTP/HTTPS URL format and prevents malicious schemes.
  */
 export class Website extends ValueObject<string> {
+  public static readonly ERROR_CODE = 'VALIDATION_ERROR_URL_INVALID' as const;
+
   // Regex validating standard domain name format (alphanumeric labels separated by dots)
   private static readonly DOMAIN_REGEX =
     /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
