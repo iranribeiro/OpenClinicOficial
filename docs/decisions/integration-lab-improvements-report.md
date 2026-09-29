@@ -12,6 +12,7 @@
 ## 1. Contexto e Motivação
 
 O repositório colaborativo oficial (`openclinic-oficial`) continha os trabalhos avançados da branch `feature/auth` desenvolvidos pelo colaborador Rômulo (commits `dac6dbc..0995f2e`: agendamento, salas, procedimentos, unidades, disponibilidades e blocos de agenda) e commits recentes de Iran (`bcd6938`). Paralelamente, no ambiente de laboratório (`openclinic-template`) e no `stash@{0}`, haviam evoluído melhorias cruciais:
+
 1. Estrutura canônica de Estabelecimentos de Saúde (EAS Organizações e Unidades CNES).
 2. Módulo de Staff / Colaboradores e Qualificações.
 3. Reformulação completa de Profissionais de Saúde (Practitioners) com suporte a múltiplos conselhos de classe (CRM, CRO, COREN, etc.), RQE e especialidades médicas CBO.
@@ -40,7 +41,7 @@ graph TD
 ### Síntese dos Blocos Executados
 
 | Bloco | Commit | Descrição da Entrega |
-|---|---|---|
+| --- | --- | --- |
 | **1. Ferramental & Workspaces** | `c8d28a2` | Adoção do `pnpm` workspaces; limpeza da raiz movendo scripts de setup para `infra/scripts/`; modernização de workflows CI (`.github/workflows/ci.yml`). |
 | **2. Core Domain** | `8f3b0f1` | Inclusão de VOs de Conselhos Regionais e RQE; DTOs de EAS Organizações e Unidades; expansão canônica de `APP_RESOURCE_MANIFEST` preservando todos os módulos de Agenda e Procedimentos de Rômulo. |
 | **3. Banco de Dados** | `096160c` | Schema Drizzle com 7 novas tabelas (`appSpecialties`, `appPractitionerRegistrations`, `appPractitionerSpecialties`, `appPractitionerQualifications`, `appPractitionerAvailability`, `appStaff`, `appStaffQualifications`); geração da migração idempotente `0007_organizations_eas_and_staff_structure.sql`; validação de 31 tabelas públicas e integridade de FKs em container Docker descartável. |
@@ -55,7 +56,7 @@ graph TD
 ## 3. Matriz de Preservação e Rastreabilidade
 
 | Ativo / Módulo | Estado no Oficial Original | Decisão de Conciliação | Resultado Final |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Agendamento & Procedimentos** | `appointments`, `rooms`, `procedures`, `units`, `schedule-blocks` criados por Rômulo | Preservar 100% sem alterações funcionais | Mantidos intactos, validados por testes unitários dedicados. |
 | **`db-check` CLI** | Implementado por Rômulo para diagnosticar conexões App DML e Owner DDL | Preservar integralmente | Mantido e funcional (`pnpm --filter @openclinic/backend-cli db-check`). |
 | **Migrações 0000..0006** | Aplicadas no oficial por Rômulo | Preservar como imutáveis | Novas tabelas isoladas na migração `0007_organizations_eas_and_staff_structure.sql`. |

@@ -146,6 +146,7 @@ LOG_LEVEL=info
 2. **Isolamento de Roles de Banco (PoLP)**:
    - **Runtime da API (`openclinic_app`)**: Permissões estritamente restritas a DML (`SELECT`, `INSERT`, `UPDATE`, `DELETE`). Sem privilégios de DDL ou superuser.
    - **Migrações e Governança (`openclinic_owner`)**: Permissões de DDL para criação/alteração de tabelas e schemas. Utilizado exclusivamente pelo container de migrações ou tarefas CLI administrativas via `DB_OWNER_SECRET_NAME`.
+
    Para simular o ambiente de containers ou orquestradores (Swarm/K8s), copie os templates de `secrets/*.example.*` para seus respectivos arquivos reais (`secrets/*.json` e `secrets/*.txt`). Consulte a especificação completa em [**`secrets/README.md`**](../secrets/README.md).
 
 > ⚠️ **Atenção (Segurança P0):** Em ambientes de homologação ou produção, altere obrigatoriamente a `JWT_KEY` e as senhas das roles `openclinic_app` e `openclinic_owner`!

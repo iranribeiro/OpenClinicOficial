@@ -43,14 +43,19 @@ para aparentar conformidade. Fonte: [HL7 R4 AppointmentStatus](https://hl7.org/f
 ## Correções realizadas nesta revisão
 
 1. **Origem imutável.** PUT deixou de aceitar `source_channel`; o repositório
+
    também impede sua alteração. Registros antigos podem receber os vínculos
    obrigatórios mantendo `LEGACY`, sem atribuir retrospectivamente uma origem.
+
 2. **Contrato estrito de escrita.** POST, PUT e PATCH rejeitam campos não
+
    suportados antes da remoção automática feita pelo AJV do Fastify. Antes,
    POST com `session_id` ou status indevido retornava 201 descartando o campo;
    PUT com apenas `tenant_id` e PATCH com dados extras retornavam sucesso.
    Agora retornam 400 sem acessar a operação do repositório.
+
 3. **Documentação/OpenAPI.** O PUT não anuncia mais canal editável, e o manual
+
    distingue o contrato atual das pendências obrigatórias da principal.
 
 Cinco casos de regressão foram executados antes da correção e reproduziram

@@ -111,6 +111,7 @@ validados na transação da API. Uma trava por tenant serializa reservas
 concorrentes. O cadastro não envia mensagens nem cria atendimentos.
 
 ---
+
 ### 2. `app_encounters` — Atendimentos e Sessões Clínicas (FHIR Encounter)
 
 Representa o encontro assistencial entre o paciente e o profissional de saúde.

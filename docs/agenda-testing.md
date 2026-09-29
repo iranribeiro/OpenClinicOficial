@@ -3,15 +3,22 @@
 ## O que cada aprovação significa
 
 - `npm test -w packages/backend-api`: testes unitários e de componentes. Os de
+
   rota que usam mocks verificam validação, encaminhamento, serialização e hooks;
   não demonstram gravação ou conflito real. Seus nomes identificam essa limitação.
+
 - `npm run test:migrations`: instalação/atualização e testes de repositório no
+
   PostgreSQL, incluindo transações, isolamento e concorrência.
+
 - `npm run test:api:functional`: aplicação real ouvindo HTTP em porta local
+
   aleatória, login com senha/Argon2, sessão e ACL persistidas, serviços e
   repositórios reais, banco migrado e releitura via GET e SQL. Não usa `vi.mock`,
   UOW falso, respostas prontas, `app.inject` ou tokens fabricados.
+
 - `npm run verify:agenda-readiness`: verificação separada de cobertura dos
+
   requisitos obrigatórios. Consome o resultado real da execução funcional,
   rejeita falhas/skips e verifica que os arquivos de teste não mudaram após a
   execução. Não é um teste funcional nem entra no contador de testes aprovados.
@@ -103,7 +110,9 @@ a partir desse recorte. O artefato TAP preserva os detalhes para investigação.
 - 434 testes unitários e de componentes do backend passaram.
 - `npm run typecheck` passou.
 - Em uma cópia temporária, remover a validação de agenda fez AG-FITIN falhar:
+
   recebeu 201 onde o contrato exige 409. O código original permaneceu intacto.
+
 - O gate de prontidão reprovou pelos seis requisitos pendentes listados acima.
 
 Esses resultados são locais; não representam uma nova execução do GitHub Actions.

@@ -86,5 +86,5 @@ npm test
 ```
 
 ## Configuration contract
- 
+
 `SECRETS_PROVIDER` defaults to `file`. Passwords, hashes, and encryption keys must never be placed in `.env`. Credentials must be supplied via structured JSON/text files (`SECRETS_DIR` or direct `*_FILE` mounts), or via cloud secret managers (`gsm`, `aws`). Legacy `SECRETS_PROVIDER=env` is rejected at bootstrap with an explicit error.

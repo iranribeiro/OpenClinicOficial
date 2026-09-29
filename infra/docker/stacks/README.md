@@ -205,7 +205,7 @@ docker service create \
 
 Como um sistema de gestão médica que manipula prontuários eletrônicos e Dados Pessoais Sensíveis de Saúde (*Protected Health Information - PHI*), o OpenClinic cumpre rigorosamente as normas estabelecidas pela **LGPD (Lei Geral de Proteção de Dados - Lei 13.709/2018, Art. 46)** e pela norma internacional **HIPAA Security Rule (§ 164.312)**.
 
-### O que é a Arquitetura Secrets-First?
+### O que é a Arquitetura Secrets-First
 
 No OpenClinic, o princípio **Secrets-First** estabelece que dados confidenciais (senhas de banco de dados, chaves criptográficas, certificados e credenciais de acesso) **são cidadãos de primeira classe na segurança**:
 

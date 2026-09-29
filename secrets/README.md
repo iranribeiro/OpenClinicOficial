@@ -133,4 +133,3 @@ O mecanismo de resolução de segredos é **100% determinístico** e segue o pri
 - **Princípio do Menor Privilégio (PoLP):** Containers da aplicação em execução montam exclusivamente `DB_APP_SECRET_NAME` e `JWT_SECRET_NAME`. Eles nunca recebem ou montam `DB_OWNER_SECRET_NAME`.
 - **Zero Segredos Reais no Git:** Senhas reais, tokens e chaves nunca devem ser commitados no Git.
 - **Configuração Fail-Closed:** Se `SECRETS_PROVIDER=file` estiver configurado e um arquivo de segredo não for encontrado ou não puder ser lido, o processo aborta imediatamente com mensagem de diagnóstico clara.
-

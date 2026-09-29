@@ -14,7 +14,7 @@
     "setup": "node infra/scripts/setup.mjs",
     "setup:quick": "node infra/scripts/setup.mjs --quickstart",
     "setup:docker": "node infra/scripts/setup.mjs",
-    "dev": "pnpm run dev:api",
+    "dev": "pnpm --filter @openclinic/backend-api --filter @openclinic/frontend-webapp --parallel dev",
     "dev:api": "pnpm --filter @openclinic/backend-api dev",
     "dev:webapp": "pnpm --filter @openclinic/frontend-webapp dev",
     "build": "pnpm --recursive run build",

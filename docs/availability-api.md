@@ -68,7 +68,9 @@ A transação encerra a versão anterior na nova data inicial e insere outra
 linha. O cliente deve usar o novo `id` retornado; `series_id` identifica a
 série e `replaces_id` aponta para a versão anterior. Apenas a última versão
 pode ser alterada ou excluída; tentar modificar uma versão substituída retorna
+
 409. Alterações simultâneas na mesma versão têm apenas um vencedor.
+
 Validações falhas retornam 422 sem encerrar o período anterior.
 
 DELETE é uma retirada lógica da última janela. Ela deixa as consultas normais,
