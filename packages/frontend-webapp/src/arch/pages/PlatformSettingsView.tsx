@@ -9,9 +9,10 @@ import {
   type PlatformApplicationData,
   type TenantData,
 } from '../../services/api.js';
-import { AlertBanner, AlertBannerType } from '../../components/AlertBanner.js';
 import { FieldLabel } from '../../components/FieldLabel.js';
+import { ToggleSwitch } from '../components/FormControls.js';
 import { useConfig } from '../../context/ConfigContext.js';
+import { useToast } from '../../context/ToastContext.js';
 import { isValidCallingCode } from '../utils/phone.utils.js';
 
 export const LOGO_ALLOWED_EXTENSIONS = ['png', 'svg', 'jpg', 'jpeg', 'webp', 'ico'];
@@ -60,6 +61,13 @@ export function isValidAppVersion(version: string): boolean {
   if (!version || !version.trim()) return false;
   const semverRegex = /^(0|[1-9]\d{0,1})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,4})(-[0-9A-Za-z.-]+)?$/;
   return semverRegex.test(version.trim());
+}
+
+/**
+ * Validates minimum password length (8 to 32 characters).
+ */
+export function isValidMinPasswordLength(length: number): boolean {
+  return typeof length === 'number' && Number.isInteger(length) && length >= 8 && length <= 32;
 }
 
 /**
@@ -132,7 +140,7 @@ export const PlatformSettingsView: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'branding' | 'security' | 'governance'>('branding');
-  const [feedback, setFeedback] = useState<{ type: AlertBannerType; msg: string } | null>(null);
+  const { toast } = useToast();
 
   // Form Fields mapped directly to sys_applications
   const [defaultTenant, setDefaultTenant] = useState<TenantData | null>(null);
@@ -141,7 +149,6 @@ export const PlatformSettingsView: React.FC = () => {
   const [appName, setAppName] = useState<string>('');
   const [appSubtitle, setAppSubtitle] = useState<string>('');
   const [appVersion, setAppVersion] = useState<string>('');
-  const [versionError, setVersionError] = useState<string | null>(null);
   const [appDescription, setAppDescription] = useState<string>('');
   const [appLogoUrl, setAppLogoUrl] = useState<string>('');
   const [logoError, setLogoError] = useState<string | null>(null);
@@ -160,13 +167,11 @@ export const PlatformSettingsView: React.FC = () => {
   const [requireLowercase, setRequireLowercase] = useState<boolean>(true);
   const [requireNumbers, setRequireNumbers] = useState<boolean>(true);
   const [requireSpecialChars, setRequireSpecialChars] = useState<boolean>(true);
-  const [suggestedPassword, setSuggestedPassword] = useState<string>('');
-  const [copiedPassword, setCopiedPassword] = useState<boolean>(false);
   const [mfaEnabled, setMfaEnabled] = useState<boolean>(false);
   const [resetTokenTtl, setResetTokenTtl] = useState<number>(24);
+  const [allowDirectUserCreation, setAllowDirectUserCreation] = useState<boolean>(true);
 
   // Governance & Platform defaults
-  const [enableAuditLog, setEnableAuditLog] = useState<boolean>(true);
   const [auditRetentionDays, setAuditRetentionDays] = useState<number>(365);
   const [isMultiTenant, setIsMultiTenant] = useState<boolean>(false);
   const [defaultLocale, setDefaultLocale] = useState<string>(SupportedLocales.PT_BR);
@@ -197,7 +202,6 @@ export const PlatformSettingsView: React.FC = () => {
       setAppName(app.appName ?? '');
       setAppSubtitle(app.appSubtitle ?? '');
       setAppVersion(app.appVersion ?? '');
-      setVersionError(null);
       setAppDescription(app.appDescription ?? '');
       setAppLogoUrl(app.appLogoUrl ?? '');
       setLogoError(null);
@@ -222,6 +226,8 @@ export const PlatformSettingsView: React.FC = () => {
       setMinPasswordLength(Math.max(8, app.defaultMinPasswordLength ?? 8));
       setMfaEnabled(Boolean(app.defaultMfaEnabled));
       setResetTokenTtl(app.defaultPasswordResetTokenTtlHours ?? 24);
+      const rawWithDirect = rawApp as PlatformApplicationData & { allow_direct_user_creation?: boolean };
+      setAllowDirectUserCreation(app.allowDirectUserCreation ?? rawWithDirect.allow_direct_user_creation ?? true);
 
       // Load granular password complexity requirements
       const extra = (app.defaultExtraSettings as Record<string, any>) || {};
@@ -232,7 +238,6 @@ export const PlatformSettingsView: React.FC = () => {
       setRequireNumbers(policy.requireNumbers ?? true);
       setRequireSpecialChars(policy.requireSpecialChars ?? true);
 
-      setEnableAuditLog(Boolean(app.defaultEnableAuditLog));
       setAuditRetentionDays(app.defaultAuditRetentionDays ?? 365);
       setIsMultiTenant(Boolean(app.isMultiTenant));
       setDefaultLocale(app.defaultLocale || SupportedLocales.PT_BR);
@@ -257,10 +262,7 @@ export const PlatformSettingsView: React.FC = () => {
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : '';
-      setFeedback({
-        type: AlertBannerType.ERROR,
-        msg: t('PLATFORM_SETTINGS_LOAD_ERROR') + (errMsg ? ` (${errMsg})` : ''),
-      });
+      toast.error(t('PLATFORM_SETTINGS_LOAD_ERROR') + (errMsg ? ` (${errMsg})` : ''));
     } finally {
       setLoading(false);
     }
@@ -269,15 +271,6 @@ export const PlatformSettingsView: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
-
-  const handleVersionChange = (val: string) => {
-    setAppVersion(val);
-    if (!isValidAppVersion(val)) {
-      setVersionError(t('PLATFORM_SETTINGS_VERSION_INVALID'));
-    } else {
-      setVersionError(null);
-    }
-  };
 
   const handleLogoUrlChange = (val: string) => {
     setAppLogoUrl(val);
@@ -296,26 +289,6 @@ export const PlatformSettingsView: React.FC = () => {
       setFaviconError(t('PLATFORM_SETTINGS_FAVICON_URL_INVALID'));
     } else {
       setFaviconError(null);
-    }
-  };
-
-  const handleGenerateSamplePassword = () => {
-    const pwd = generateCompliantPassword(minPasswordLength, {
-      requireUppercase,
-      requireLowercase,
-      requireNumbers,
-      requireSpecialChars,
-    });
-    setSuggestedPassword(pwd);
-    setCopiedPassword(false);
-  };
-
-  const handleCopySamplePassword = () => {
-    if (!suggestedPassword) return;
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(suggestedPassword);
-      setCopiedPassword(true);
-      setTimeout(() => setCopiedPassword(false), 2500);
     }
   };
 
@@ -343,10 +316,7 @@ export const PlatformSettingsView: React.FC = () => {
   const handleToggleLocale = (loc: string) => {
     if (supportedLocales.includes(loc)) {
       if (supportedLocales.length <= 1) {
-        setFeedback({
-          type: AlertBannerType.WARNING,
-          msg: t('PLATFORM_SETTINGS_AT_LEAST_ONE_LANG'),
-        });
+        toast.warning(t('PLATFORM_SETTINGS_AT_LEAST_ONE_LANG'));
         return;
       }
       const next = supportedLocales.filter((l) => l !== loc);
@@ -362,50 +332,36 @@ export const PlatformSettingsView: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isValidAppVersion(appVersion)) {
-      setFeedback({
-        type: AlertBannerType.ERROR,
-        msg: t('PLATFORM_SETTINGS_VERSION_INVALID'),
-      });
-      setActiveTab('branding');
-      return;
-    }
-
     if (appLogoUrl.trim() && !isValidAssetUrl(appLogoUrl, LOGO_ALLOWED_EXTENSIONS)) {
-      setFeedback({
-        type: AlertBannerType.ERROR,
-        msg: t('PLATFORM_SETTINGS_LOGO_URL_INVALID'),
-      });
+      toast.error(t('PLATFORM_SETTINGS_LOGO_URL_INVALID'));
       setActiveTab('branding');
       return;
     }
 
     if (appFaviconUrl.trim() && !isValidAssetUrl(appFaviconUrl, FAVICON_ALLOWED_EXTENSIONS)) {
-      setFeedback({
-        type: AlertBannerType.ERROR,
-        msg: t('PLATFORM_SETTINGS_FAVICON_URL_INVALID'),
-      });
+      toast.error(t('PLATFORM_SETTINGS_FAVICON_URL_INVALID'));
       setActiveTab('branding');
       return;
     }
 
     if (defaultDialingCode && !isValidCallingCode(defaultDialingCode)) {
-      setFeedback({
-        type: AlertBannerType.ERROR,
-        msg: t('PLATFORM_SETTINGS_DIALING_CODE_INVALID'),
-      });
+      toast.error(t('PLATFORM_SETTINGS_DIALING_CODE_INVALID'));
       setActiveTab('governance');
+      return;
+    }
+
+    if (!isValidMinPasswordLength(Number(minPasswordLength))) {
+      toast.error(t('PLATFORM_SETTINGS_MIN_PASS_LEN_INVALID'));
+      setActiveTab('security');
       return;
     }
 
     try {
       setSaving(true);
-      setFeedback(null);
 
       const payload: Partial<PlatformApplicationData> = {
         appName,
         appSubtitle,
-        appVersion,
         appDescription,
         appLogoUrl: appLogoUrl.trim() || null,
         appFaviconUrl: appFaviconUrl.trim() || null,
@@ -416,7 +372,6 @@ export const PlatformSettingsView: React.FC = () => {
         defaultMinPasswordLength: Number(minPasswordLength),
         defaultMfaEnabled: mfaEnabled,
         defaultPasswordResetTokenTtlHours: Number(resetTokenTtl),
-        defaultEnableAuditLog: enableAuditLog,
         defaultAuditRetentionDays: Number(auditRetentionDays),
         defaultExtraSettings: {
           ...rawExtraSettings,
@@ -427,6 +382,7 @@ export const PlatformSettingsView: React.FC = () => {
             requireSpecialChars,
           },
         },
+        allowDirectUserCreation,
         isMultiTenant,
         defaultLocale,
         defaultSupportedLocales: supportedLocales,
@@ -437,17 +393,11 @@ export const PlatformSettingsView: React.FC = () => {
       await updatePlatformApplication(payload);
       await refreshConfig();
       setSupportedLocales(supportedLocales);
-      setFeedback({
-        type: AlertBannerType.SUCCESS,
-        msg: t('PLATFORM_SETTINGS_SAVED_SUCCESS'),
-      });
+      toast.success(t('PLATFORM_SETTINGS_SAVED_SUCCESS'));
       await loadData();
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : '';
-      setFeedback({
-        type: AlertBannerType.ERROR,
-        msg: t('PLATFORM_SETTINGS_SAVE_ERROR') + (errMsg ? ` (${errMsg})` : ''),
-      });
+      toast.error(t('PLATFORM_SETTINGS_SAVE_ERROR') + (errMsg ? ` (${errMsg})` : ''));
     } finally {
       setSaving(false);
     }
@@ -463,123 +413,130 @@ export const PlatformSettingsView: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Header */}
-      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <h2 style={{ margin: '0 0 4px', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>
-              🛠️ {t('PLATFORM_SETTINGS_TITLE')}
-            </h2>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
-              {t('PLATFORM_SETTINGS_SUBTITLE')}
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            {/* Contratante / Tenant */}
-            {defaultTenant && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b' }}>
-                  {t('PLATFORM_SETTINGS_HEADER_TENANT')}:
-                </span>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', padding: '4px 10px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  <span>🏢</span>
-                  <span>{defaultTenant.name}</span>
-                </span>
-              </div>
-            )}
-
-            {/* Application (Database canonical name: OpenClinic) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b' }}>
-                {t('PLATFORM_SETTINGS_HEADER_APP')}:
-              </span>
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '4px 10px', borderRadius: 6 }}>
-                {appName || 'OpenClinic'}
-              </span>
-              <span style={{ fontSize: '0.78rem', fontWeight: 600, background: '#e0f2fe', color: '#0284c7', padding: '4px 8px', borderRadius: 6 }}>
-                v{appVersion}
-              </span>
-            </div>
-          </div>
-        </div>
-
+      {/* Navigation Sub-Tabs & Context Meta Bar */}
+      <div
+        style={{
+          background: '#fff',
+          border: '1px solid #e2e8f0',
+          borderRadius: 12,
+          padding: '12px 18px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+        }}
+      >
         {/* Navigation Sub-Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 20, borderBottom: '1px solid #e2e8f0', paddingBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setActiveTab('branding')}
             style={{
               padding: '8px 16px',
-              borderRadius: 6,
-              fontSize: '0.85rem',
+              borderRadius: 8,
+              fontSize: '0.82rem',
               fontWeight: 600,
               cursor: 'pointer',
-              border: 'none',
-              background: activeTab === 'branding' ? '#0284c7' : 'transparent',
-              color: activeTab === 'branding' ? '#fff' : '#64748b',
+              border: activeTab === 'branding' ? '1px solid #bae6fd' : '1px solid transparent',
+              background: activeTab === 'branding' ? '#f0f9ff' : 'transparent',
+              color: activeTab === 'branding' ? '#0284c7' : '#64748b',
               transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            🎨 {t('PLATFORM_SETTINGS_TAB_BRANDING')}
+            <span>🎨</span>
+            <span>{t('PLATFORM_SETTINGS_TAB_BRANDING')}</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('security')}
             style={{
               padding: '8px 16px',
-              borderRadius: 6,
-              fontSize: '0.85rem',
+              borderRadius: 8,
+              fontSize: '0.82rem',
               fontWeight: 600,
               cursor: 'pointer',
-              border: 'none',
-              background: activeTab === 'security' ? '#0284c7' : 'transparent',
-              color: activeTab === 'security' ? '#fff' : '#64748b',
+              border: activeTab === 'security' ? '1px solid #bae6fd' : '1px solid transparent',
+              background: activeTab === 'security' ? '#f0f9ff' : 'transparent',
+              color: activeTab === 'security' ? '#0284c7' : '#64748b',
               transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            🔐 {t('PLATFORM_SETTINGS_TAB_SECURITY')}
+            <span>🔐</span>
+            <span>{t('PLATFORM_SETTINGS_TAB_SECURITY')}</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('governance')}
             style={{
               padding: '8px 16px',
-              borderRadius: 6,
-              fontSize: '0.85rem',
+              borderRadius: 8,
+              fontSize: '0.82rem',
               fontWeight: 600,
               cursor: 'pointer',
-              border: 'none',
-              background: activeTab === 'governance' ? '#0284c7' : 'transparent',
-              color: activeTab === 'governance' ? '#fff' : '#64748b',
+              border: activeTab === 'governance' ? '1px solid #bae6fd' : '1px solid transparent',
+              background: activeTab === 'governance' ? '#f0f9ff' : 'transparent',
+              color: activeTab === 'governance' ? '#0284c7' : '#64748b',
               transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            🏛️ {t('PLATFORM_SETTINGS_TAB_GOVERNANCE')}
+            <span>🏛️</span>
+            <span>{t('PLATFORM_SETTINGS_TAB_GOVERNANCE')}</span>
           </button>
         </div>
-      </div>
 
-      {/* Feedback Banner */}
-      {feedback && (
-        <AlertBanner
-          type={feedback.type}
-          message={feedback.msg}
-          onClose={() => setFeedback(null)}
-        />
-      )}
+        {/* Context Meta: Tenant & App Version */}
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          {defaultTenant && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: '0.76rem', fontWeight: 600, color: '#64748b' }}>
+                {t('PLATFORM_SETTINGS_HEADER_TENANT')}:
+              </span>
+              <span style={{ fontSize: '0.80rem', fontWeight: 700, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', padding: '3px 10px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span>🏢</span>
+                <span>{defaultTenant.name}</span>
+              </span>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 600, color: '#64748b' }}>
+              {t('PLATFORM_SETTINGS_HEADER_APP')}:
+            </span>
+            <span style={{ fontSize: '0.80rem', fontWeight: 700, background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '3px 10px', borderRadius: 6 }}>
+              {appName || 'OpenClinic'}
+            </span>
+            <span style={{ fontSize: '0.76rem', fontWeight: 600, background: '#e0f2fe', color: '#0284c7', padding: '3px 8px', borderRadius: 6 }}>
+              v{appVersion}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Form Content */}
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {/* Tab 1: Branding & Identity */}
         {activeTab === 'branding' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div style={{ background: '#fff', padding: 22, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-                🏷️ {t('PLATFORM_SETTINGS_TAB_BRANDING')}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 18, alignItems: 'stretch' }}>
+            {/* Group 1 (Left): Identidade */}
+            <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🏷️</span>
+                <span>{t('PLATFORM_SETTINGS_GROUP_IDENTITY')}</span>
               </h3>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
-                <div style={{ flex: '1 1 240px' }}>
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div style={{ flex: '1 1 200px' }}>
                   <FieldLabel
                     label={t('PLATFORM_SETTINGS_FIELD_APP_NAME')}
                     required
@@ -594,66 +551,70 @@ export const PlatformSettingsView: React.FC = () => {
                   />
                 </div>
 
-                <div style={{ flex: '2 1 360px' }}>
-                  <FieldLabel
-                    label={t('PLATFORM_SETTINGS_FIELD_APP_SUBTITLE')}
-                  />
-                  <input
-                    type="text"
-                    placeholder={t('PLATFORM_SETTINGS_APP_SUBTITLE_PLACEHOLDER')}
-                    value={appSubtitle}
-                    onChange={(e) => setAppSubtitle(e.target.value)}
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
-                  />
-                </div>
-
                 <div style={{ width: 140, flexShrink: 0 }}>
                   <FieldLabel
                     label={t('PLATFORM_SETTINGS_FIELD_APP_VERSION')}
                     tooltip={t('PLATFORM_SETTINGS_APP_VERSION_HINT')}
-                    required
                   />
-                  <input
-                    type="text"
-                    required
-                    placeholder={t('PLATFORM_SETTINGS_APP_VERSION_PLACEHOLDER')}
-                    value={appVersion}
-                    onChange={(e) => handleVersionChange(e.target.value)}
+                  <div
+                    title={t('PLATFORM_SETTINGS_APP_VERSION_HINT')}
                     style={{
-                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
                       padding: '9px 12px',
                       borderRadius: 6,
-                      border: versionError ? '1.5px solid #e11d48' : '1px solid #cbd5e1',
+                      border: '1px solid #cbd5e1',
+                      background: '#f8fafc',
+                      color: '#0369a1',
                       fontSize: '0.85rem',
                       fontFamily: 'monospace',
-                      fontWeight: 600,
-                      color: versionError ? '#e11d48' : '#0f172a',
-                      background: versionError ? '#fff1f2' : '#ffffff',
+                      fontWeight: 700,
+                      cursor: 'default',
+                      userSelect: 'none',
                     }}
-                  />
-                  {versionError && (
-                    <div style={{ fontSize: '0.72rem', color: '#e11d48', marginTop: 4 }}>
-                      {versionError}
-                    </div>
-                  )}
+                  >
+                    <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>🔒</span>
+                    <span>{appVersion ? `v${appVersion.replace(/^v/, '')}` : '—'}</span>
+                  </div>
                 </div>
               </div>
 
-              <div style={{ marginTop: 16 }}>
+              <div>
+                <FieldLabel
+                  label={t('PLATFORM_SETTINGS_FIELD_APP_SUBTITLE')}
+                />
+                <input
+                  type="text"
+                  placeholder={t('PLATFORM_SETTINGS_APP_SUBTITLE_PLACEHOLDER')}
+                  value={appSubtitle}
+                  onChange={(e) => setAppSubtitle(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                 <FieldLabel
                   label={t('PLATFORM_SETTINGS_FIELD_APP_DESC')}
                 />
                 <textarea
-                  rows={3}
+                  rows={4}
                   placeholder={t('PLATFORM_SETTINGS_APP_DESC_PLACEHOLDER')}
                   value={appDescription}
                   onChange={(e) => setAppDescription(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.85rem', resize: 'vertical' }}
+                  style={{ width: '100%', flex: 1, minHeight: 90, padding: '9px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.85rem', resize: 'vertical' }}
                 />
               </div>
+            </div>
 
-              {/* Logo & Favicon URLs unified with live preview inside same container border */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, marginTop: 16 }}>
+            {/* Group 2 (Right): Branding */}
+            <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🎨</span>
+                <span>{t('PLATFORM_SETTINGS_GROUP_BRANDING')}</span>
+              </h3>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, flex: 1, justifyContent: 'space-between' }}>
                 {/* Unified Logo Box */}
                 <div style={{
                   border: logoError ? '1.5px solid #e11d48' : '1px solid #e2e8f0',
@@ -893,33 +854,25 @@ export const PlatformSettingsView: React.FC = () => {
         {/* Tab 2: Security & Authentication */}
         {activeTab === 'security' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div style={{ background: '#fff', padding: 22, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-                🔐 {t('PLATFORM_SETTINGS_TAB_SECURITY')}
-              </h3>
+            {/* Top 2-Column Grid: Users & Auth (Left) & User Creation & MFA (Right Sibling) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 18, alignItems: 'stretch' }}>
+              {/* Box 1 (Left): Usuários e Autenticação (Identificador Principal de Login) */}
+              <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                  👥 {t('PLATFORM_SETTINGS_BOX_USERS_AUTH')}
+                </h3>
 
-              {/* Primary Login Identifier Selection */}
-              <div style={{
-                marginBottom: 20,
-                padding: 16,
-                borderRadius: 10,
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-              }}>
                 <div>
-                  <FieldLabel
-                    label={t('PLATFORM_SETTINGS_FIELD_PRIMARY_LOGIN_ID')}
-                    tooltip={t('PLATFORM_SETTINGS_PRIMARY_LOGIN_ID_HINT')}
-                  />
-                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}>
+                    {t('PLATFORM_SETTINGS_FIELD_PRIMARY_LOGIN_ID')}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
                     {t('PLATFORM_SETTINGS_PRIMARY_LOGIN_ID_HINT')}
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+                {/* Vertical stack */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, justifyContent: 'space-between' }}>
                   {/* Option 1: CPF (Default) */}
                   <div
                     onClick={() => setPrimaryLoginIdentifier(LoginIdentifierType.CPF)}
@@ -927,34 +880,34 @@ export const PlatformSettingsView: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '12px 14px',
+                      padding: '10px 14px',
                       borderRadius: 8,
                       cursor: 'pointer',
                       border: primaryLoginIdentifier === LoginIdentifierType.CPF ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                      background: primaryLoginIdentifier === LoginIdentifierType.CPF ? '#f0f9ff' : '#ffffff',
+                      background: primaryLoginIdentifier === LoginIdentifierType.CPF ? '#f0f9ff' : '#f8fafc',
                       transition: 'all 0.15s ease',
                       userSelect: 'none',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '1.25rem' }}>🪪</span>
+                      <span style={{ fontSize: '1.15rem' }}>🪪</span>
                       <div>
-                        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: primaryLoginIdentifier === LoginIdentifierType.CPF ? '#0369a1' : '#1e293b' }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: primaryLoginIdentifier === LoginIdentifierType.CPF ? '#0369a1' : '#1e293b' }}>
                           {t('PLATFORM_SETTINGS_LOGIN_ID_CPF')}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.70rem', color: '#64748b' }}>
                           {t('PLATFORM_SETTINGS_LOGIN_ID_CPF_DESC')}
                         </div>
                       </div>
                     </div>
                     <div style={{
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '0.74rem',
+                      fontSize: '0.70rem',
                       fontWeight: 800,
                       background: primaryLoginIdentifier === LoginIdentifierType.CPF ? '#0284c7' : '#ffffff',
                       color: '#ffffff',
@@ -971,34 +924,34 @@ export const PlatformSettingsView: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '12px 14px',
+                      padding: '10px 14px',
                       borderRadius: 8,
                       cursor: 'pointer',
                       border: primaryLoginIdentifier === LoginIdentifierType.USERNAME ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                      background: primaryLoginIdentifier === LoginIdentifierType.USERNAME ? '#f0f9ff' : '#ffffff',
+                      background: primaryLoginIdentifier === LoginIdentifierType.USERNAME ? '#f0f9ff' : '#f8fafc',
                       transition: 'all 0.15s ease',
                       userSelect: 'none',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '1.25rem' }}>👤</span>
+                      <span style={{ fontSize: '1.15rem' }}>👤</span>
                       <div>
-                        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: primaryLoginIdentifier === LoginIdentifierType.USERNAME ? '#0369a1' : '#1e293b' }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: primaryLoginIdentifier === LoginIdentifierType.USERNAME ? '#0369a1' : '#1e293b' }}>
                           {t('PLATFORM_SETTINGS_LOGIN_ID_USERNAME')}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.70rem', color: '#64748b' }}>
                           {t('PLATFORM_SETTINGS_LOGIN_ID_USERNAME_DESC')}
                         </div>
                       </div>
                     </div>
                     <div style={{
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '0.74rem',
+                      fontSize: '0.70rem',
                       fontWeight: 800,
                       background: primaryLoginIdentifier === LoginIdentifierType.USERNAME ? '#0284c7' : '#ffffff',
                       color: '#ffffff',
@@ -1015,34 +968,34 @@ export const PlatformSettingsView: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '12px 14px',
+                      padding: '10px 14px',
                       borderRadius: 8,
                       cursor: 'pointer',
                       border: primaryLoginIdentifier === LoginIdentifierType.EMAIL ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                      background: primaryLoginIdentifier === LoginIdentifierType.EMAIL ? '#f0f9ff' : '#ffffff',
+                      background: primaryLoginIdentifier === LoginIdentifierType.EMAIL ? '#f0f9ff' : '#f8fafc',
                       transition: 'all 0.15s ease',
                       userSelect: 'none',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '1.25rem' }}>✉️</span>
+                      <span style={{ fontSize: '1.15rem' }}>✉️</span>
                       <div>
-                        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: primaryLoginIdentifier === LoginIdentifierType.EMAIL ? '#0369a1' : '#1e293b' }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: primaryLoginIdentifier === LoginIdentifierType.EMAIL ? '#0369a1' : '#1e293b' }}>
                           {t('PLATFORM_SETTINGS_LOGIN_ID_EMAIL')}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.70rem', color: '#64748b' }}>
                           {t('PLATFORM_SETTINGS_LOGIN_ID_EMAIL_DESC')}
                         </div>
                       </div>
                     </div>
                     <div style={{
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '0.74rem',
+                      fontSize: '0.70rem',
                       fontWeight: 800,
                       background: primaryLoginIdentifier === LoginIdentifierType.EMAIL ? '#0284c7' : '#ffffff',
                       color: '#ffffff',
@@ -1054,478 +1007,211 @@ export const PlatformSettingsView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Login Attempts & Session Security */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
-                <div>
-                  <FieldLabel
-                    label={t('PLATFORM_SETTINGS_FIELD_MAX_ATTEMPTS')}
-                    tooltip={t('PLATFORM_SETTINGS_MAX_ATTEMPTS_HINT')}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
-                      <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={maxLoginAttempts}
-                        onChange={(e) => setMaxLoginAttempts(Math.min(20, Math.max(1, Number(e.target.value.slice(0, 2)))))}
-                        style={{ width: 55, padding: '7px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
-                      />
-                      <span style={{ background: '#f8fafc', padding: '7px 10px', fontSize: '0.74rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
-                        {t('PLATFORM_SETTINGS_ATTEMPTS_UNIT')}
-                      </span>
+              {/* Box 2 (Right Sibling): Criação de Usuários & MFA */}
+              <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                  🛡️ {t('PLATFORM_SETTINGS_BOX_USER_CREATION_MFA')}
+                </h3>
+
+                <div style={{
+                  padding: '16px',
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                  background: '#f8fafc',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: 16,
+                  flex: 1,
+                }}>
+                  {/* Top: Permitir Criação Direta de Usuários */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: '1.15rem' }}>👤</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}>
+                          {t('PLATFORM_SETTINGS_ALLOW_DIRECT_USER_CREATION_LABEL')}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 4 }}>
+                        {t('PLATFORM_SETTINGS_ALLOW_DIRECT_USER_CREATION_HINT')}
+                      </div>
                     </div>
-                    <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>{t('PLATFORM_SETTINGS_ATTEMPTS_RANGE')}</span>
+                    <ToggleSwitch
+                      checked={allowDirectUserCreation}
+                      onChange={(val: boolean) => setAllowDirectUserCreation(val)}
+                      activeText={t('GLOBAL_STATUS_ACTIVE')}
+                      inactiveText={t('GLOBAL_STATUS_INACTIVE')}
+                    />
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid #e2e8f0' }} />
+
+                  {/* Bottom: Exigir Autenticação Multifator (MFA) Global */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: '1.15rem' }}>🛡️</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}>
+                          {t('PLATFORM_SETTINGS_FIELD_MFA')}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 4 }}>
+                        {t('PLATFORM_SETTINGS_FIELD_MFA_DESC')}
+                      </div>
+                    </div>
+                    <ToggleSwitch
+                      checked={mfaEnabled}
+                      disabled
+                      onChange={() => {}}
+                      activeText={t('GLOBAL_STATUS_ACTIVE')}
+                      inactiveText={t('GLOBAL_STATUS_INACTIVE')}
+                    />
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div>
-                  <FieldLabel
-                    label={t('PLATFORM_SETTINGS_FIELD_LOCKOUT_DURATION')}
-                    tooltip={t('PLATFORM_SETTINGS_LOCKOUT_HINT')}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
-                      <input
-                        type="number"
-                        min="1"
-                        max="1440"
-                        value={lockoutDuration}
-                        onChange={(e) => setLockoutDuration(Math.min(1440, Math.max(1, Number(e.target.value.slice(0, 4)))))}
-                        style={{ width: 65, padding: '7px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
-                      />
-                      <span style={{ background: '#f8fafc', padding: '7px 10px', fontSize: '0.74rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
-                        {t('PLATFORM_SETTINGS_MINUTES_UNIT')}
-                      </span>
+            {/* 2-Column Grid: Session Policies (Left) & Password Complexity (Right) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 18, alignItems: 'stretch' }}>
+              {/* Left Column: Políticas de Sessão, Bloqueio & Recuperação */}
+              <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>⏱️</span>
+                  <span>Políticas de Sessão, Bloqueio & Recuperação</span>
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                  {/* 1: Max Attempts */}
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <FieldLabel
+                      label={t('PLATFORM_SETTINGS_FIELD_MAX_ATTEMPTS')}
+                      tooltip={t('PLATFORM_SETTINGS_MAX_ATTEMPTS_HINT')}
+                    />
+                    <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={maxLoginAttempts}
+                          onChange={(e) => setMaxLoginAttempts(Math.min(20, Math.max(1, Number(e.target.value.slice(0, 2)))))}
+                          style={{ width: 50, padding: '6px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
+                        />
+                        <span style={{ background: '#f8fafc', padding: '6px 8px', fontSize: '0.72rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
+                          {t('PLATFORM_SETTINGS_ATTEMPTS_UNIT')}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: 4 }}>{t('PLATFORM_SETTINGS_ATTEMPTS_RANGE')}</span>
                     </div>
-                    <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>{t('PLATFORM_SETTINGS_LOCKOUT_RANGE')}</span>
                   </div>
-                </div>
 
-                <div>
-                  <FieldLabel
-                    label={t('PLATFORM_SETTINGS_FIELD_SESSION_TIMEOUT')}
-                    tooltip={t('PLATFORM_SETTINGS_SESSION_TIMEOUT_HINT')}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
-                      <input
-                        type="number"
-                        min="5"
-                        max="1440"
-                        value={sessionTimeout}
-                        onChange={(e) => setSessionTimeout(Math.min(1440, Math.max(5, Number(e.target.value.slice(0, 4)))))}
-                        style={{ width: 65, padding: '7px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
-                      />
-                      <span style={{ background: '#f8fafc', padding: '7px 10px', fontSize: '0.74rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
-                        {t('PLATFORM_SETTINGS_MINUTES_UNIT')}
-                      </span>
+                  {/* 2: Lockout Duration */}
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <FieldLabel
+                      label={t('PLATFORM_SETTINGS_FIELD_LOCKOUT_DURATION')}
+                      tooltip={t('PLATFORM_SETTINGS_LOCKOUT_HINT')}
+                    />
+                    <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+                        <input
+                          type="number"
+                          min="1"
+                          max="1440"
+                          value={lockoutDuration}
+                          onChange={(e) => setLockoutDuration(Math.min(1440, Math.max(1, Number(e.target.value.slice(0, 4)))))}
+                          style={{ width: 58, padding: '6px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
+                        />
+                        <span style={{ background: '#f8fafc', padding: '6px 8px', fontSize: '0.72rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
+                          {t('PLATFORM_SETTINGS_MINUTES_UNIT')}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: 4 }}>{t('PLATFORM_SETTINGS_LOCKOUT_RANGE')}</span>
                     </div>
-                    <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>{t('PLATFORM_SETTINGS_SESSION_RANGE')}</span>
+                  </div>
+
+                  {/* 3: Session Timeout */}
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <FieldLabel
+                      label={t('PLATFORM_SETTINGS_FIELD_SESSION_TIMEOUT')}
+                      tooltip={t('PLATFORM_SETTINGS_SESSION_TIMEOUT_HINT')}
+                    />
+                    <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+                        <input
+                          type="number"
+                          min="5"
+                          max="1440"
+                          value={sessionTimeout}
+                          onChange={(e) => setSessionTimeout(Math.min(1440, Math.max(5, Number(e.target.value.slice(0, 4)))))}
+                          style={{ width: 58, padding: '6px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
+                        />
+                        <span style={{ background: '#f8fafc', padding: '6px 8px', fontSize: '0.72rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
+                          {t('PLATFORM_SETTINGS_MINUTES_UNIT')}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: 4 }}>{t('PLATFORM_SETTINGS_SESSION_RANGE')}</span>
+                    </div>
+                  </div>
+
+                  {/* 4: Reset Token TTL */}
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <FieldLabel
+                      label={t('PLATFORM_SETTINGS_FIELD_RESET_TTL')}
+                      tooltip={t('PLATFORM_SETTINGS_RESET_TTL_HINT')}
+                    />
+                    <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+                        <input
+                          type="number"
+                          min="1"
+                          max="168"
+                          value={resetTokenTtl}
+                          onChange={(e) => setResetTokenTtl(Math.min(168, Math.max(1, Number(e.target.value.slice(0, 3)))))}
+                          style={{ width: 50, padding: '6px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
+                        />
+                        <span style={{ background: '#f8fafc', padding: '6px 8px', fontSize: '0.72rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
+                          {t('PLATFORM_SETTINGS_HOURS_UNIT')}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: 4 }}>{t('PLATFORM_SETTINGS_RESET_TTL_RANGE')}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Password Policy & Complexity Unified Group */}
-              <div style={{
-                marginTop: 20,
-                padding: 20,
-                borderRadius: 10,
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: '#eff6ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.1rem',
-                      border: '1px solid #bfdbfe',
-                    }}>
-                      🔑
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.90rem', fontWeight: 700, color: '#0f172a' }}>
-                        {t('PLATFORM_SETTINGS_PWD_POLICY_TITLE')}
-                      </div>
-                      <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                        {t('PLATFORM_SETTINGS_PWD_POLICY_DESC')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Right Column: Senhas */}
+              <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🔑</span>
+                  <span>{t('PLATFORM_SETTINGS_PWD_POLICY_TITLE')}</span>
+                </h3>
 
-                {/* Numeric field: Min Password Length */}
-                <div style={{ background: '#ffffff', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                {/* Min Length */}
+                <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                   <FieldLabel
                     label={t('PLATFORM_SETTINGS_FIELD_MIN_PASS_LEN')}
-                    tooltip={t('PLATFORM_SETTINGS_MIN_PASS_LEN_HINT')}
+                    style={{ marginBottom: 0 }}
                   />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
-                      <input
-                        type="number"
-                        min="8"
-                        max="128"
-                        value={minPasswordLength}
-                        onChange={(e) => setMinPasswordLength(Math.min(128, Math.max(8, Number(e.target.value.slice(0, 3)))))}
-                        style={{ width: 60, padding: '7px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
-                      />
-                      <span style={{ background: '#f8fafc', padding: '7px 10px', fontSize: '0.74rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
-                        {t('PLATFORM_SETTINGS_CHARS_UNIT')}
-                      </span>
-                    </div>
-                    <span style={{ fontSize: '0.74rem', color: '#0369a1', fontWeight: 500 }}>{t('PLATFORM_SETTINGS_OWASP_REC')}</span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+                    <input
+                      type="number"
+                      min={8}
+                      max={32}
+                      value={minPasswordLength || ''}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setMinPasswordLength(raw === '' ? 0 : Number(raw.slice(0, 2)));
+                      }}
+                      onBlur={() => setMinPasswordLength((prev) => Math.min(32, Math.max(8, prev || 8)))}
+                      style={{ width: 50, padding: '5px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
+                    />
+                    <span style={{ background: '#f8fafc', padding: '5px 8px', fontSize: '0.72rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
+                      {t('PLATFORM_SETTINGS_CHARS_UNIT')}
+                    </span>
                   </div>
                 </div>
-
-                {/* Complexity Options (Interactive Card Selectors) */}
-                <div>
-                  <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    {t('PLATFORM_SETTINGS_COMPLEXITY_RULES_TITLE')}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-                    {/* Option 1: Uppercase */}
-                    <div
-                      onClick={() => setRequireUppercase(!requireUppercase)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 14px',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        border: requireUppercase ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                        background: requireUppercase ? '#f0f9ff' : '#ffffff',
-                        transition: 'all 0.15s ease',
-                        userSelect: 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{
-                          fontFamily: 'monospace',
-                          fontWeight: 700,
-                          fontSize: '0.80rem',
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          background: requireUppercase ? '#0284c7' : '#f1f5f9',
-                          color: requireUppercase ? '#ffffff' : '#475569',
-                        }}>
-                          A-Z
-                        </span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: requireUppercase ? '#0369a1' : '#1e293b' }}>
-                          {t('PLATFORM_SETTINGS_PWD_REQ_UPPERCASE')}
-                        </span>
-                      </div>
-                      <div style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.74rem',
-                        fontWeight: 800,
-                        background: requireUppercase ? '#0284c7' : '#ffffff',
-                        color: '#ffffff',
-                        border: requireUppercase ? 'none' : '1.5px solid #cbd5e1',
-                      }}>
-                        {requireUppercase && '✓'}
-                      </div>
-                    </div>
-
-                    {/* Option 2: Lowercase */}
-                    <div
-                      onClick={() => setRequireLowercase(!requireLowercase)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 14px',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        border: requireLowercase ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                        background: requireLowercase ? '#f0f9ff' : '#ffffff',
-                        transition: 'all 0.15s ease',
-                        userSelect: 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{
-                          fontFamily: 'monospace',
-                          fontWeight: 700,
-                          fontSize: '0.80rem',
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          background: requireLowercase ? '#0284c7' : '#f1f5f9',
-                          color: requireLowercase ? '#ffffff' : '#475569',
-                        }}>
-                          a-z
-                        </span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: requireLowercase ? '#0369a1' : '#1e293b' }}>
-                          {t('PLATFORM_SETTINGS_PWD_REQ_LOWERCASE')}
-                        </span>
-                      </div>
-                      <div style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.74rem',
-                        fontWeight: 800,
-                        background: requireLowercase ? '#0284c7' : '#ffffff',
-                        color: '#ffffff',
-                        border: requireLowercase ? 'none' : '1.5px solid #cbd5e1',
-                      }}>
-                        {requireLowercase && '✓'}
-                      </div>
-                    </div>
-
-                    {/* Option 3: Numbers */}
-                    <div
-                      onClick={() => setRequireNumbers(!requireNumbers)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 14px',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        border: requireNumbers ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                        background: requireNumbers ? '#f0f9ff' : '#ffffff',
-                        transition: 'all 0.15s ease',
-                        userSelect: 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{
-                          fontFamily: 'monospace',
-                          fontWeight: 700,
-                          fontSize: '0.80rem',
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          background: requireNumbers ? '#0284c7' : '#f1f5f9',
-                          color: requireNumbers ? '#ffffff' : '#475569',
-                        }}>
-                          0-9
-                        </span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: requireNumbers ? '#0369a1' : '#1e293b' }}>
-                          {t('PLATFORM_SETTINGS_PWD_REQ_NUMBERS')}
-                        </span>
-                      </div>
-                      <div style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.74rem',
-                        fontWeight: 800,
-                        background: requireNumbers ? '#0284c7' : '#ffffff',
-                        color: '#ffffff',
-                        border: requireNumbers ? 'none' : '1.5px solid #cbd5e1',
-                      }}>
-                        {requireNumbers && '✓'}
-                      </div>
-                    </div>
-
-                    {/* Option 4: Special characters */}
-                    <div
-                      onClick={() => setRequireSpecialChars(!requireSpecialChars)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 14px',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        border: requireSpecialChars ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                        background: requireSpecialChars ? '#f0f9ff' : '#ffffff',
-                        transition: 'all 0.15s ease',
-                        userSelect: 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{
-                          fontFamily: 'monospace',
-                          fontWeight: 700,
-                          fontSize: '0.80rem',
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          background: requireSpecialChars ? '#0284c7' : '#f1f5f9',
-                          color: requireSpecialChars ? '#ffffff' : '#475569',
-                        }}>
-                          !@#$
-                        </span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: requireSpecialChars ? '#0369a1' : '#1e293b' }}>
-                          {t('PLATFORM_SETTINGS_PWD_REQ_SPECIAL')}
-                        </span>
-                      </div>
-                      <div style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.74rem',
-                        fontWeight: 800,
-                        background: requireSpecialChars ? '#0284c7' : '#ffffff',
-                        color: '#ffffff',
-                        border: requireSpecialChars ? 'none' : '1.5px solid #cbd5e1',
-                      }}>
-                        {requireSpecialChars && '✓'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Generate & Copy Password Button */}
-                <div style={{
-                  borderTop: '1px solid #e2e8f0',
-                  paddingTop: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 10,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <button
-                      type="button"
-                      onClick={handleGenerateSamplePassword}
-                      style={{
-                        padding: '7px 15px',
-                        borderRadius: 6,
-                        background: '#0284c7',
-                        color: '#ffffff',
-                        border: 'none',
-                        fontSize: '0.80rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'background 0.15s ease',
-                      }}
-                    >
-                      🎲 {t('PLATFORM_SETTINGS_PWD_GENERATE_SAMPLE')}
-                    </button>
-                    {suggestedPassword && (
-                      <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.90rem', background: '#ffffff', padding: '4px 10px', borderRadius: 6, border: '1px solid #cbd5e1', color: '#0369a1' }}>
-                        {suggestedPassword}
-                      </span>
-                    )}
-                  </div>
-
-                  {suggestedPassword && (
-                    <button
-                      type="button"
-                      onClick={handleCopySamplePassword}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: 6,
-                        background: copiedPassword ? '#15803d' : '#ffffff',
-                        color: copiedPassword ? '#ffffff' : '#0369a1',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {copiedPassword ? t('PLATFORM_SETTINGS_COPIED') : t('PLATFORM_SETTINGS_COPY')}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Password Reset & Recovery Dedicated Group */}
-              <div style={{
-                marginTop: 20,
-                padding: 20,
-                borderRadius: 10,
-                border: '1px solid #e2e8f0',
-                background: '#f8fafc',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    background: '#eff6ff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.1rem',
-                    border: '1px solid #bfdbfe',
-                  }}>
-                    🔄
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.90rem', fontWeight: 700, color: '#0f172a' }}>
-                      {t('PLATFORM_SETTINGS_PWD_RESET_GROUP_TITLE')}
-                    </div>
-                    <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                      {t('PLATFORM_SETTINGS_PWD_RESET_GROUP_DESC')}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ background: '#ffffff', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                  <FieldLabel
-                    label={t('PLATFORM_SETTINGS_FIELD_RESET_TTL')}
-                    tooltip={t('PLATFORM_SETTINGS_RESET_TTL_HINT')}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
-                      <input
-                        type="number"
-                        min="1"
-                        max="168"
-                        value={resetTokenTtl}
-                        onChange={(e) => setResetTokenTtl(Math.min(168, Math.max(1, Number(e.target.value.slice(0, 3)))))}
-                        style={{ width: 55, padding: '7px 8px', border: 'none', textAlign: 'center', fontSize: '0.84rem', fontWeight: 600, outline: 'none' }}
-                      />
-                      <span style={{ background: '#f8fafc', padding: '7px 10px', fontSize: '0.74rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
-                        {t('PLATFORM_SETTINGS_HOURS_UNIT')}
-                      </span>
-                    </div>
-                    <span style={{ fontSize: '0.74rem', color: '#64748b' }}>{t('PLATFORM_SETTINGS_RESET_TTL_RANGE')}</span>
-                    <span style={{ fontSize: '0.74rem', color: '#0369a1', marginLeft: 4 }}>• {t('PLATFORM_SETTINGS_RESET_TTL_TIP')}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* MFA Toggle */}
-              <div style={{ marginTop: 20 }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                  <input
-                    type="checkbox"
-                    checked={mfaEnabled}
-                    onChange={(e) => setMfaEnabled(e.target.checked)}
-                    style={{ marginTop: 3, width: 18, height: 18, accentColor: '#0284c7' }}
-                  />
-                  <div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>
-                      {t('PLATFORM_SETTINGS_FIELD_MFA')}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 2 }}>
-                      {t('PLATFORM_SETTINGS_FIELD_MFA_DESC')}
-                    </div>
-                  </div>
-                </label>
               </div>
             </div>
           </div>
@@ -1533,25 +1219,26 @@ export const PlatformSettingsView: React.FC = () => {
 
         {/* Tab 3: Governance & Auditing */}
         {activeTab === 'governance' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {/* Tenancy Architecture Card with Modern Segmented Switch */}
-            <div style={{ background: '#fff', padding: 22, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 18, alignItems: 'stretch' }}>
+            {/* Left Column: Arquitetura e Auditoria */}
+            <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🏛️</span>
+                <span>{t('PLATFORM_SETTINGS_CARD_ARCH_AUDIT')}</span>
+              </h3>
+
+              {/* Tenancy Architecture Selection */}
+              <div style={{ background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: '1.2rem' }}>🏛️</span>
-                    <FieldLabel
-                      label={t('PLATFORM_SETTINGS_TENANCY_MODE_LABEL')}
-                      tooltip={t('PLATFORM_SETTINGS_TENANCY_HINT')}
-                      style={{ marginBottom: 0 }}
-                    />
+                  <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0f172a' }}>
+                    {t('PLATFORM_SETTINGS_TENANCY_MODE_LABEL')}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 4, maxWidth: 540 }}>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
                     {t('PLATFORM_SETTINGS_TENANCY_MODE_DESC')}
                   </div>
                 </div>
 
-                {/* Segmented Switch: Mono vs Multi */}
+                {/* Segmented Switch: Mono vs Multi with hover titles */}
                 <div
                   style={{
                     display: 'inline-flex',
@@ -1565,16 +1252,17 @@ export const PlatformSettingsView: React.FC = () => {
                 >
                   <button
                     type="button"
+                    title={t('PLATFORM_SETTINGS_MODE_MONO') + ': ' + t('PLATFORM_SETTINGS_TENANCY_MODE_DESC')}
                     onClick={() => setIsMultiTenant(false)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '8px 18px',
+                      padding: '7px 16px',
                       borderRadius: 24,
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '0.82rem',
+                      fontSize: '0.80rem',
                       fontWeight: !isMultiTenant ? 700 : 500,
                       color: !isMultiTenant ? '#0369a1' : '#64748b',
                       background: !isMultiTenant ? '#ffffff' : 'transparent',
@@ -1588,16 +1276,17 @@ export const PlatformSettingsView: React.FC = () => {
 
                   <button
                     type="button"
+                    title={t('PLATFORM_SETTINGS_MODE_MULTI') + ': ' + t('PLATFORM_SETTINGS_TENANCY_MODE_DESC')}
                     onClick={() => setIsMultiTenant(true)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '8px 18px',
+                      padding: '7px 16px',
                       borderRadius: 24,
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '0.82rem',
+                      fontSize: '0.80rem',
                       fontWeight: isMultiTenant ? 700 : 500,
                       color: isMultiTenant ? '#0369a1' : '#64748b',
                       background: isMultiTenant ? '#ffffff' : 'transparent',
@@ -1610,24 +1299,63 @@ export const PlatformSettingsView: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Audit Retention */}
+              <div style={{ background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <FieldLabel
+                  label={t('PLATFORM_SETTINGS_FIELD_AUDIT_RETENTION')}
+                  tooltip={t('PLATFORM_SETTINGS_AUDIT_RETENTION_HINT')}
+                />
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 6,
+                    background: '#fff',
+                    overflow: 'hidden',
+                    marginTop: 4,
+                  }}
+                >
+                  <input
+                    type="number"
+                    min={30}
+                    max={3650}
+                    step={1}
+                    value={auditRetentionDays}
+                    onChange={(e) => setAuditRetentionDays(Number(e.target.value.slice(0, 4)))}
+                    style={{
+                      width: 70,
+                      padding: '6px 8px',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '0.84rem',
+                      textAlign: 'center',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                    }}
+                  />
+                  <span style={{ background: '#f8fafc', padding: '6px 10px', fontSize: '0.72rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
+                    {t('PLATFORM_SETTINGS_DAYS_UNIT')}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Languages & Regionalization Card */}
-            <div style={{ background: '#fff', padding: 22, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: '1.2rem' }}>🌍</span>
-                <FieldLabel
-                  label={t('PLATFORM_SETTINGS_ACTIVE_LANGUAGES')}
-                  tooltip={t('PLATFORM_SETTINGS_LANGUAGES_HINT')}
-                  style={{ marginBottom: 0 }}
-                />
+            {/* Right Column: Languages & Regionalization Card */}
+            <div style={{ background: '#fff', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🌍</span>
+                  <span>{t('PLATFORM_SETTINGS_ACTIVE_LANGUAGES')}</span>
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                  {t('PLATFORM_SETTINGS_ACTIVE_LANGUAGES_DESC')}
+                </p>
               </div>
-              <p style={{ margin: '0 0 16px', fontSize: '0.8rem', color: '#64748b' }}>
-                {t('PLATFORM_SETTINGS_ACTIVE_LANGUAGES_DESC')}
-              </p>
 
-              {/* Structured Vertical List of Active Languages (Dynamically read from SupportedLocales) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+              {/* Structured Vertical List of Active Languages */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                 {availableLocales.map((loc) => {
                   const isChecked = supportedLocales.includes(loc);
                   const isDefault = defaultLocale === loc;
@@ -1642,7 +1370,7 @@ export const PlatformSettingsView: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '12px 16px',
+                        padding: '10px 14px',
                         borderRadius: 8,
                         border: isChecked ? '1.5px solid #38bdf8' : '1px solid #e2e8f0',
                         background: isChecked ? '#f0f9ff' : '#ffffff',
@@ -1651,34 +1379,34 @@ export const PlatformSettingsView: React.FC = () => {
                         boxShadow: isChecked ? '0 1px 3px rgba(2, 132, 199, 0.08)' : 'none',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => {}} // Handled on parent container
-                          style={{ width: 18, height: 18, accentColor: '#0284c7', cursor: 'pointer' }}
+                          style={{ width: 16, height: 16, accentColor: '#0284c7', cursor: 'pointer' }}
                         />
-                        <span style={{ fontSize: '1.35rem', lineHeight: 1 }}>{meta.flag}</span>
+                        <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{meta.flag}</span>
                         <div>
-                          <div style={{ fontSize: '0.88rem', fontWeight: 600, color: isChecked ? '#0f172a' : '#64748b' }}>
+                          <div style={{ fontSize: '0.84rem', fontWeight: 600, color: isChecked ? '#0f172a' : '#64748b' }}>
                             {langLabel}
                           </div>
-                          <div style={{ fontSize: '0.74rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                          <div style={{ fontSize: '0.70rem', color: '#94a3b8', fontFamily: 'monospace' }}>
                             {loc}
                           </div>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {isDefault && (
                           <span
                             style={{
-                              fontSize: '0.72rem',
+                              fontSize: '0.70rem',
                               fontWeight: 700,
                               background: '#e0f2fe',
                               color: '#0369a1',
-                              padding: '3px 8px',
-                              borderRadius: 6,
+                              padding: '2px 6px',
+                              borderRadius: 4,
                               border: '1px solid #bae6fd',
                             }}
                           >
@@ -1687,10 +1415,10 @@ export const PlatformSettingsView: React.FC = () => {
                         )}
                         <span
                           style={{
-                            fontSize: '0.72rem',
+                            fontSize: '0.70rem',
                             fontWeight: 600,
-                            padding: '3px 8px',
-                            borderRadius: 6,
+                            padding: '2px 6px',
+                            borderRadius: 4,
                             background: isChecked ? '#dcfce7' : '#f1f5f9',
                             color: isChecked ? '#15803d' : '#94a3b8',
                           }}
@@ -1706,7 +1434,7 @@ export const PlatformSettingsView: React.FC = () => {
               </div>
 
               {/* Regional: Timezone, Dialing Code, Default Locale */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
                 <div>
                   <FieldLabel
                     label={t('PLATFORM_SETTINGS_FIELD_DEFAULT_LOCALE')}
@@ -1715,7 +1443,7 @@ export const PlatformSettingsView: React.FC = () => {
                   <select
                     value={defaultLocale}
                     onChange={(e) => setDefaultLocale(e.target.value)}
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#fff' }}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.82rem', background: '#fff' }}
                   >
                     {availableLocales
                       .filter((loc) => supportedLocales.includes(loc))
@@ -1739,7 +1467,7 @@ export const PlatformSettingsView: React.FC = () => {
                   <select
                     value={defaultTimezone}
                     onChange={(e) => setDefaultTimezone(e.target.value)}
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#fff' }}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.82rem', background: '#fff' }}
                   >
                     <option value="America/Sao_Paulo">America/Sao_Paulo (UTC-3)</option>
                     <option value="America/Manaus">America/Manaus (UTC-4)</option>
@@ -1760,11 +1488,11 @@ export const PlatformSettingsView: React.FC = () => {
                     value={defaultDialingCode}
                     onChange={handleDialingCodeChange}
                     style={{
-                      width: 90,
+                      width: 80,
                       padding: '7px 10px',
                       borderRadius: 6,
                       border: dialingCodeError ? '1.5px solid #e11d48' : '1px solid #cbd5e1',
-                      fontSize: '0.85rem',
+                      fontSize: '0.82rem',
                       fontFamily: 'monospace',
                       fontWeight: 600,
                       color: dialingCodeError ? '#e11d48' : '#0f172a',
@@ -1772,76 +1500,11 @@ export const PlatformSettingsView: React.FC = () => {
                     }}
                   />
                   {dialingCodeError && (
-                    <div style={{ fontSize: '0.72rem', color: '#e11d48', marginTop: 4 }}>
+                    <div style={{ fontSize: '0.70rem', color: '#e11d48', marginTop: 4 }}>
                       {dialingCodeError}
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Governance & Audit Card */}
-            <div style={{ background: '#fff', padding: 22, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-                📜 {t('PLATFORM_SETTINGS_TAB_GOVERNANCE')}
-              </h3>
-
-              <div>
-                <FieldLabel
-                  label={t('PLATFORM_SETTINGS_FIELD_AUDIT_RETENTION')}
-                  tooltip={t('PLATFORM_SETTINGS_AUDIT_RETENTION_HINT')}
-                />
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: 6,
-                    background: '#fff',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <input
-                    type="number"
-                    min={30}
-                    max={3650}
-                    step={1}
-                    value={auditRetentionDays}
-                    onChange={(e) => setAuditRetentionDays(Number(e.target.value.slice(0, 4)))}
-                    style={{
-                      width: 75,
-                      padding: '6px 8px',
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: '0.85rem',
-                      textAlign: 'center',
-                      fontWeight: 600,
-                      color: '#0f172a',
-                    }}
-                  />
-                  <span style={{ background: '#f8fafc', padding: '6px 10px', fontSize: '0.74rem', color: '#64748b', fontWeight: 600, borderLeft: '1px solid #e2e8f0' }}>
-                    {t('PLATFORM_SETTINGS_DAYS_UNIT')}
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                  <input
-                    type="checkbox"
-                    checked={enableAuditLog}
-                    onChange={(e) => setEnableAuditLog(e.target.checked)}
-                    style={{ marginTop: 3, width: 18, height: 18, accentColor: '#0284c7' }}
-                  />
-                  <div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>
-                      {t('PLATFORM_SETTINGS_FIELD_AUDIT_ENABLED')}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 2 }}>
-                      {t('PLATFORM_SETTINGS_FIELD_AUDIT_ENABLED_DESC')}
-                    </div>
-                  </div>
-                </label>
               </div>
             </div>
           </div>
@@ -1851,22 +1514,22 @@ export const PlatformSettingsView: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
           <button
             type="submit"
-            disabled={saving || Boolean(dialingCodeError) || Boolean(versionError)}
+            disabled={saving || Boolean(dialingCodeError)}
             style={{
               padding: '10px 24px',
               borderRadius: 6,
-              background: saving || dialingCodeError || versionError ? '#94a3b8' : '#0284c7',
+              background: saving || dialingCodeError ? '#94a3b8' : '#0284c7',
               color: '#fff',
               fontSize: '0.85rem',
               fontWeight: 600,
               border: 'none',
-              cursor: saving || dialingCodeError || versionError ? 'not-allowed' : 'pointer',
+              cursor: saving || dialingCodeError ? 'not-allowed' : 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
             }}
           >
-            {saving ? `⏳ ${t('PLATFORM_SETTINGS_SAVING')}` : `💾 ${t('PLATFORM_SETTINGS_BTN_SAVE')}`}
+            {saving ? `⏳ ${t('GLOBAL_LABEL_SAVING')}` : `💾 ${t('GLOBAL_BTN_SAVE')}`}
           </button>
         </div>
       </form>

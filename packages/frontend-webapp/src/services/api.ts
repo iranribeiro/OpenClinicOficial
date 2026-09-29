@@ -11,6 +11,7 @@ import type {
   OrganizationData,
   OrganizationUnitData,
   RoomData,
+  RoomType,
 } from '../business/registries/organizations/types.js';
 import {
   UserRole,
@@ -1657,26 +1658,95 @@ export async function deleteOrganizationUnit(id: string): Promise<ActionResponse
 
 // ── Rooms API ──
 
+interface RawRoomBackend {
+  id: string;
+  unit_id?: string;
+  unitId?: string;
+  name: string;
+  room_type?: string;
+  roomType?: string;
+  is_schedulable?: boolean;
+  isSchedulable?: boolean;
+  equipment?: string[];
+  equipment_resources?: string;
+  equipmentResources?: string;
+  notes?: string | null;
+  is_active?: boolean;
+  isActive?: boolean;
+}
+
+function normalizeRoom(r: RawRoomBackend): RoomData {
+  return {
+    id: r.id,
+    unitId: r.unit_id || r.unitId || '',
+    name: r.name,
+    roomType: (r.room_type || r.roomType || 'CONSULTORIO') as RoomType,
+    isSchedulable: r.is_schedulable ?? r.isSchedulable ?? true,
+    equipmentResources: Array.isArray(r.equipment)
+      ? r.equipment.join(', ')
+      : (r.equipment_resources || r.equipmentResources || ''),
+    notes: r.notes ?? undefined,
+    isActive: r.is_active ?? r.isActive ?? true,
+  };
+}
+
+function toBackendRoomPayload(payload: Partial<RoomData>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  if (payload.name !== undefined) result.name = payload.name;
+  if (payload.unitId !== undefined) result.unit_id = payload.unitId;
+  if (payload.roomType !== undefined) result.room_type = payload.roomType;
+  if (payload.isSchedulable !== undefined) result.is_schedulable = payload.isSchedulable;
+  if (payload.equipmentResources !== undefined) {
+    result.equipment = payload.equipmentResources
+      ? payload.equipmentResources.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+  }
+  if (payload.notes !== undefined) result.notes = payload.notes;
+  if (payload.isActive !== undefined) result.is_active = payload.isActive;
+  return result;
+}
+
 export async function listRooms(unitId?: string): Promise<RoomData[]> {
-  const query = unitId ? `?unitId=${encodeURIComponent(unitId)}` : '';
-  return await apiFetch<RoomData[]>(`/business/rooms${query}`);
+  const query = unitId ? `?unit_id=${encodeURIComponent(unitId)}` : '';
+  const res = await apiFetch<{ items?: RawRoomBackend[]; total?: number } | RawRoomBackend[]>(
+    `/business/rooms${query}`
+  );
+  const items = Array.isArray(res) ? res : res.items || [];
+  return items.map(normalizeRoom);
 }
 
 export async function createRoom(payload: RoomData): Promise<ActionResponse<RoomData>> {
-  return await apiFetch<ActionResponse<RoomData>>('/business/rooms', {
+  const backendPayload = toBackendRoomPayload(payload);
+  const res = await apiFetch<ActionResponse<RawRoomBackend> | RawRoomBackend>('/business/rooms', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify(backendPayload),
   });
+  const data = (res && 'data' in res && res.data) ? res.data : (res as RawRoomBackend);
+  return {
+    code: 'SUCCESS',
+    message: 'Room created successfully',
+    data: normalizeRoom(data),
+  };
 }
 
 export async function updateRoom(
   id: string,
   payload: Partial<RoomData>
 ): Promise<ActionResponse<RoomData>> {
-  return await apiFetch<ActionResponse<RoomData>>(`/business/rooms/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
+  const backendPayload = toBackendRoomPayload(payload);
+  const res = await apiFetch<ActionResponse<RawRoomBackend> | RawRoomBackend>(
+    `/business/rooms/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(backendPayload),
+    }
+  );
+  const data = (res && 'data' in res && res.data) ? res.data : (res as RawRoomBackend);
+  return {
+    code: 'SUCCESS',
+    message: 'Room updated successfully',
+    data: normalizeRoom(data),
+  };
 }
 
 export async function deleteRoom(id: string): Promise<ActionResponse<void>> {
