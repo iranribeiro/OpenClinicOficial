@@ -153,8 +153,8 @@ Você pode subir a stack completa (**Banco PostgreSQL 17**, **Backend API Fastif
 
 ```bash
 # Opção 1: Assistente interativo do projeto (Recomendado)
-npm run setup
-# Ou diretamente pelo terminal: .\setup.ps1 (Windows) ou ./setup.sh (Linux/macOS)
+pnpm setup
+# Ou diretamente pelo terminal: .\infra\scripts\setup.ps1 (Windows) ou ./infra/scripts/setup.sh (Linux/macOS)
 
 # Opção 2: Execução direta da Stack Unificada Local (Build a partir do código-fonte)
 docker compose -f infra/docker/stacks/openclinic-db-api-webapp-local.yml up --build -d

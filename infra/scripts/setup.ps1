@@ -2,7 +2,7 @@
 # 🚀 OPENCLINIC - SETUP WRAPPER (POWERSHELL / WINDOWS)
 # =============================================================================
 # Executa o assistente multiplataforma de setup do desenvolvedor.
-# Uso: .\setup.ps1 [-Quickstart] [-Demo] [-Stop] [-Secrets]
+# Uso: .\infra\scripts\setup.ps1 [-Quickstart] [-Demo] [-Stop] [-Secrets]
 # =============================================================================
 
 param (
@@ -20,4 +20,4 @@ if ($Stop) { $argsList += "--stop" }
 if ($Secrets) { $argsList += "--secrets" }
 if ($Help) { $argsList += "--help" }
 
-node "$PSScriptRoot\scripts\setup.mjs" @argsList
+node "$PSScriptRoot\setup.mjs" @argsList

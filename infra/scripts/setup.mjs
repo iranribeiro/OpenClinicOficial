@@ -19,7 +19,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(__dirname, '..');
+const ROOT_DIR = resolve(__dirname, '..', '..');
 const STACKS_DIR = resolve(ROOT_DIR, 'infra', 'docker', 'stacks');
 const SECRETS_DIR = resolve(ROOT_DIR, 'secrets');
 

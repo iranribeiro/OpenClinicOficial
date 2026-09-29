@@ -3,8 +3,8 @@
 # 🚀 OPENCLINIC - SETUP WRAPPER (BASH / LINUX / MACOS)
 # =============================================================================
 # Executa o assistente multiplataforma de setup do desenvolvedor.
-# Uso: ./setup.sh [--quickstart] [--demo] [--stop] [--secrets]
+# Uso: ./infra/scripts/setup.sh [--quickstart] [--demo] [--stop] [--secrets]
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-node "$SCRIPT_DIR/scripts/setup.mjs" "$@"
+node "$SCRIPT_DIR/setup.mjs" "$@"

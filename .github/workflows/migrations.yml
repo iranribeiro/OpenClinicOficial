@@ -28,10 +28,14 @@ jobs:
       DB_PASS: migration_test_only
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
       - name: Install PostgreSQL 17 Client Tools
         run: |
           if ! which pg_dump >/dev/null 2>&1 || ! pg_dump --version | grep -q "17\."; then
@@ -46,15 +50,15 @@ jobs:
           export PATH="/usr/lib/postgresql/17/bin:$PATH"
           pg_dump --version
           pg_restore --version
-      - run: npm ci
-      - run: npm run build -w packages/core
-      - run: npm run db:verify
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @openclinic/core build
+      - run: pnpm run db:verify
       - name: Run Migration and Backup/Restore Tests
         env:
           TEST_PG_CLIENT: '1'
-        run: npm run test:migrations
+        run: pnpm run test:migrations
       - name: Functional API tests (real HTTP, authentication and PostgreSQL)
-        run: npm run test:api:functional
+        run: pnpm run test:api:functional
       - name: Preserve functional test results and complete failure details
         if: always()
         uses: actions/upload-artifact@v4
