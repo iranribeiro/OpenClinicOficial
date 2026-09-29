@@ -11,6 +11,7 @@ import { dbRestore } from './commands/db-restore.js';
 import { userCreateAdmin } from './commands/user-create-admin.js';
 import { userResetPassword } from './commands/user-reset-password.js';
 import { authCheck } from './commands/auth-check.js';
+import { dbCheck } from './commands/db-check.js';
 import { dbSyncRemote } from './commands/db-sync-remote.js';
 
 
@@ -70,6 +71,12 @@ program.command('db:status')
   .description('Lists applied and pending migrations without modifying the database')
   .option('--target <target>', 'Target environment: local or remote', 'local')
   .action((options) => dbStatus(options));
+
+program.command('db:check')
+  .description('Verifies database connectivity, active database identity, roles, and latency')
+  .option('--target <target>', 'Target environment: local or remote', 'local')
+  .option('--role <role>', 'Role connection to test: app, owner, or all', 'all')
+  .action((options) => dbCheck(options));
 
 program.command('db:baseline')
   .description('Checks or records migration baseline on an existing database while preserving data')

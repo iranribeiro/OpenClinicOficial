@@ -28,6 +28,7 @@
     "compliance:full": "node infra/compliance/runner.mjs verify --profile integration --non-interactive",
     "db:setup": "npm run cli -- db:setup",
     "db:status": "npm run cli -- db:status",
+    "db:check": "npm run cli -- db:check",
     "db:baseline": "npm run cli -- db:baseline",
     "db:generate": "npm run db:generate -w packages/backend-api",
     "db:verify": "tsx infra/database/verify-migrations.ts",
