@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.js';
 import DashboardPage from './pages/DashboardPage.js';
 import { useAuth } from './hooks/useAuth.js';
@@ -35,12 +35,17 @@ export default function App() {
     );
   }
 
+  const location = useLocation();
+  const redirectTarget = (location.state as { from?: { pathname?: string; search?: string } })?.from?.pathname
+    ? `${(location.state as { from: { pathname: string; search?: string } }).from.pathname}${(location.state as { from: { pathname: string; search?: string } }).from.search || ''}`
+    : '/dashboard';
+
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif', height: '100vh', maxHeight: '100vh', background: '#f1f5f9', padding: 16, boxSizing: 'border-box', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <Routes>
-        <Route path="/login" element={accessToken ? <Navigate to="/dashboard" /> : <LoginPage />} />
-        <Route path="/dashboard" element={accessToken ? <DashboardPage /> : <Navigate to="/login" />} />
-        <Route path="/*" element={accessToken ? <DashboardPage /> : <Navigate to="/login" />} />
+        <Route path="/login" element={accessToken ? <Navigate to={redirectTarget} replace /> : <LoginPage />} />
+        <Route path="/dashboard" element={accessToken ? <DashboardPage /> : <Navigate to="/login" replace state={{ from: location }} />} />
+        <Route path="/*" element={accessToken ? <DashboardPage /> : <Navigate to="/login" replace state={{ from: location }} />} />
       </Routes>
     </div>
   );

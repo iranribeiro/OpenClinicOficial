@@ -1090,7 +1090,12 @@ export function checkIdentityUniqueness(params: {
 
 export async function listPractitioners(): Promise<PractitionerItem[]> {
   try {
-    return await apiFetch<PractitionerItem[]>('/business/practitioners');
+    const res = await apiFetch<{ items?: PractitionerItem[]; total?: number } | PractitionerItem[]>(
+      '/business/practitioners'
+    );
+    const items = Array.isArray(res) ? res : (res?.items || []);
+    if (items.length > 0) return items;
+    return getStoredPractitioners();
   } catch {
     return getStoredPractitioners();
   }
@@ -1416,7 +1421,10 @@ function saveStoredStaff(items: StaffItem[]): void {
 
 export async function listStaff(): Promise<StaffItem[]> {
   try {
-    return await apiFetch<StaffItem[]>('/business/staff');
+    const res = await apiFetch<{ items?: StaffItem[]; total?: number } | StaffItem[]>('/business/staff');
+    const items = Array.isArray(res) ? res : (res?.items || []);
+    if (items.length > 0) return items;
+    return getStoredStaff();
   } catch {
     return getStoredStaff();
   }

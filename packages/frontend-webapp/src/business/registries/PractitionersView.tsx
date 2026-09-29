@@ -39,8 +39,8 @@ export const PractitionersView: React.FC = () => {
     setLoading(true);
     try {
       const [practs, specs] = await Promise.all([listPractitioners(), listSpecialties()]);
-      setPractitioners(practs);
-      setSpecialtiesCatalog(specs);
+      setPractitioners(Array.isArray(practs) ? practs : []);
+      setSpecialtiesCatalog(Array.isArray(specs) ? specs : []);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('PRACTITIONERS_ERROR_LOAD'));
     } finally {

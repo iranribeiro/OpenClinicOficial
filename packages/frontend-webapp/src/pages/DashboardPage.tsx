@@ -576,9 +576,9 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {canReadBaseStaff && (
+              {canReadBasePractitioners && (
                 <div
-                  onClick={() => handleSelectTab('registries_staff')}
+                  onClick={() => handleSelectTab('registries_practitioners')}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
@@ -594,6 +594,27 @@ export default function DashboardPage() {
                   <div style={{ fontSize: '1.4rem', marginBottom: 6 }}>🩺</div>
                   <div style={{ fontWeight: 700, fontSize: '0.90rem', color: '#0f172a' }}>{t('DASHBOARD_CLINICAL_TITLE')}</div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 3 }}>{t('DASHBOARD_CLINICAL_DESC')}</div>
+                </div>
+              )}
+
+              {canReadBaseStaff && (
+                <div
+                  onClick={() => handleSelectTab('registries_staff')}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 10,
+                    padding: 16,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0284c7'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(2, 132, 199, 0.12)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; }}
+                >
+                  <div style={{ fontSize: '1.4rem', marginBottom: 6 }}>🧑‍💼</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.90rem', color: '#0f172a' }}>{t('NAV_BASE_STAFF')}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 3 }}>{t('STAFF_SUBTITLE')}</div>
                 </div>
               )}
 

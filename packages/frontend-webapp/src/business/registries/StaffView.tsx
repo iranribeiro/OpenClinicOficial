@@ -37,7 +37,7 @@ export const StaffView: React.FC = () => {
     setLoading(true);
     try {
       const data = await listStaff();
-      setStaffList(data);
+      setStaffList(Array.isArray(data) ? data : []);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('STAFF_ERROR_LOAD'));
     } finally {

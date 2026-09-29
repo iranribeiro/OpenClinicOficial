@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { t, useI18n, getLocaleMetadata, type SupportedLocale } from '../../i18n/index.js';
+import { t, useI18n, getLocaleMetadata, type SupportedLocale, type TranslationKey } from '../../i18n/index.js';
+import { APP_RESOURCE_MANIFEST } from '@openclinic/core/shared';
 import type { UserProfile } from '../../types/auth.js';
 
 export interface HeaderProps {
@@ -48,36 +49,94 @@ export const Header: React.FC<HeaderProps> = ({
   const cleanDisplayName = (user?.full_name ?? user?.display_name ?? t('LABEL_USER_DEFAULT')).replace(/\s*\((Owner|Admin|User)\)/gi, '');
 
   const getActiveTabTitle = (): string => {
+    // 1. Automatic resolution via canonical resource manifest
+    const manifestRes = APP_RESOURCE_MANIFEST.find((r) => r.code === activeTab);
+    if (manifestRes?.labelKey) {
+      return t(manifestRes.labelKey as TranslationKey);
+    }
+
+    // 2. Specific or legacy tab keys
     switch (activeTab) {
-      case 'op_schedule': return t('NAV_ATTENDANCE_SCHEDULE');
-      case 'op_attendance': return t('NAV_ATTENDANCE_QUEUE');
-      case 'op_patients': return t('NAV_CLINICAL_PATIENTS');
-      case 'op_pep': return t('NAV_CLINICAL_PEP');
-      case 'op_consultations': return t('NAV_CLINICAL_CONSULTATIONS');
-      case 'op_cashflow': return t('NAV_FINANCIAL_CASHFLOW');
-      case 'op_payables': return t('NAV_FINANCIAL_PAYABLES');
-      case 'op_billing': return t('NAV_FINANCIAL_BILLING');
-      case 'base_procedures': return t('NAV_BASE_PROCEDURES');
-      case 'base_health_plans': return t('NAV_BASE_HEALTH_PLANS');
-      case 'base_staff': return t('NAV_BASE_STAFF');
-      case 'menu_profile': return t('USER_MENU_PROFILE');
-      case 'menu_password': return t('USER_MENU_SECURITY');
-      case 'menu_help': return t('USER_MENU_HELP');
-      // Management
-      case 'menu_mgmt_indicators': return t('NAV_MGMT_INDICATORS');
-      case 'menu_mgmt_reports': return t('NAV_MGMT_REPORTS');
-      // System
-      case 'menu_sys_settings': return t('NAV_SYS_SETTINGS');
-      case 'menu_sys_users': return t('NAV_SYS_USERS');
-      case 'menu_sys_institution': return t('NAV_SYS_INSTITUTION');
-      case 'menu_sys_audit': return t('NAV_SYS_AUDIT');
-      // Platform
-      case 'menu_platform_settings': return t('NAV_PLATFORM_SETTINGS');
-      case 'menu_platform_tenants': return t('NAV_PLATFORM_TENANTS');
-      case 'menu_platform_api_keys': return t('NAV_PLATFORM_API_KEYS');
-      case 'menu_platform_webhooks': return t('NAV_PLATFORM_WEBHOOKS');
-      case 'menu_platform_policies': return t('NAV_PLATFORM_POLICIES');
-      default: return activeTab;
+      case 'attendance_schedule':
+      case 'op_schedule':
+        return t('NAV_ATTENDANCE_SCHEDULE');
+      case 'attendance_queue':
+      case 'op_attendance':
+        return t('NAV_ATTENDANCE_QUEUE');
+      case 'clinical_patients':
+      case 'op_patients':
+        return t('NAV_CLINICAL_PATIENTS');
+      case 'clinical_records':
+      case 'op_pep':
+        return t('NAV_CLINICAL_PEP');
+      case 'clinical_consultations':
+      case 'op_consultations':
+        return t('NAV_CLINICAL_CONSULTATIONS');
+      case 'financial_cashflow':
+      case 'op_cashflow':
+        return t('NAV_FINANCIAL_CASHFLOW');
+      case 'financial_payables':
+      case 'op_payables':
+        return t('NAV_FINANCIAL_PAYABLES');
+      case 'financial_billing':
+      case 'op_billing':
+        return t('NAV_FINANCIAL_BILLING');
+      case 'registries_organizations':
+      case 'base_organizations':
+        return t('NAV_BASE_ORGANIZATIONS');
+      case 'registries_practitioners':
+      case 'base_practitioners':
+        return t('NAV_BASE_PRACTITIONERS');
+      case 'registries_staff':
+      case 'base_staff':
+        return t('NAV_BASE_STAFF');
+      case 'registries_procedures':
+      case 'base_procedures':
+        return t('NAV_BASE_PROCEDURES');
+      case 'registries_health_plans':
+      case 'base_health_plans':
+        return t('NAV_BASE_HEALTH_PLANS');
+      case 'management_metrics':
+      case 'menu_mgmt_indicators':
+        return t('NAV_MGMT_INDICATORS');
+      case 'management_reports':
+      case 'menu_mgmt_reports':
+        return t('NAV_MGMT_REPORTS');
+      case 'system_settings':
+      case 'menu_sys_settings':
+        return t('NAV_SYS_SETTINGS');
+      case 'system_users':
+      case 'menu_sys_users':
+        return t('NAV_SYS_USERS');
+      case 'system_audit':
+      case 'menu_sys_audit':
+        return t('NAV_SYS_AUDIT');
+      case 'platform_settings':
+      case 'menu_platform_settings':
+        return t('NAV_PLATFORM_SETTINGS');
+      case 'platform_tenants':
+      case 'menu_platform_tenants':
+        return t('NAV_PLATFORM_TENANTS');
+      case 'platform_api_keys':
+      case 'menu_platform_api_keys':
+        return t('NAV_PLATFORM_API_KEYS');
+      case 'platform_integrations':
+      case 'menu_platform_webhooks':
+        return t('NAV_PLATFORM_WEBHOOKS');
+      case 'platform_policies':
+      case 'menu_platform_policies':
+        return t('NAV_PLATFORM_POLICIES');
+      case 'account_profile':
+      case 'menu_profile':
+        return t('USER_MENU_PROFILE');
+      case 'account_security':
+      case 'menu_password':
+        return t('USER_MENU_SECURITY');
+      case 'account_help':
+      case 'menu_help':
+        return t('USER_MENU_HELP');
+      default:
+        return activeTab;
     }
   };
 
