@@ -23,6 +23,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   canReadOpCashflow,
   canReadOpPayables,
   canReadOpBilling,
+  canReadBaseOrganizations,
+  canReadBasePractitioners,
   canReadBaseProcedures,
   canReadBaseHealthPlans,
   canReadBaseStaff,
@@ -72,6 +74,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         canReadOpCashflow={canReadOpCashflow}
         canReadOpPayables={canReadOpPayables}
         canReadOpBilling={canReadOpBilling}
+        canReadBaseOrganizations={canReadBaseOrganizations}
+        canReadBasePractitioners={canReadBasePractitioners}
         canReadBaseProcedures={canReadBaseProcedures}
         canReadBaseHealthPlans={canReadBaseHealthPlans}
         canReadBaseStaff={canReadBaseStaff}

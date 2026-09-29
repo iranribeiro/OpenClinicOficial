@@ -16,8 +16,11 @@ export interface SidebarProps {
   canReadOpCashflow: boolean;
   canReadOpPayables: boolean;
   canReadOpBilling: boolean;
+  canReadBaseOrganizations?: boolean;
+  canReadSysInstitution?: boolean;
   canReadBaseProcedures: boolean;
   canReadBaseHealthPlans: boolean;
+  canReadBasePractitioners?: boolean;
   canReadBaseStaff: boolean;
   // Management
   canReadMgmtIndicators?: boolean;
@@ -25,7 +28,6 @@ export interface SidebarProps {
   // System
   canReadSysSettings?: boolean;
   canReadSysUsers?: boolean;
-  canReadSysInstitution?: boolean;
   canReadSysAudit?: boolean;
   // Platform (Owner)
   canReadPlatformSettings?: boolean;
@@ -47,14 +49,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   canReadOpCashflow,
   canReadOpPayables,
   canReadOpBilling,
+  canReadBaseOrganizations,
+  canReadSysInstitution,
   canReadBaseProcedures,
   canReadBaseHealthPlans,
+  canReadBasePractitioners,
   canReadBaseStaff,
   canReadMgmtIndicators,
   canReadMgmtReports,
   canReadSysSettings,
   canReadSysUsers,
-  canReadSysInstitution,
   canReadSysAudit,
   canReadPlatformSettings,
   canReadPlatformTenants,
@@ -82,8 +86,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const hasAttendanceSection = canReadOpSchedule || canReadOpAttendance;
   const hasClinicalSection = canReadOpPatients || canReadOpPep || canReadOpConsultations;
-  const hasFinancialSection = canReadOpCashflow || canReadOpPayables || canReadOpBilling;
-  const hasRegistriesSection = canReadBaseProcedures || canReadBaseHealthPlans || canReadBaseStaff;
+  const hasFinancialSection = canReadOpBilling || canReadOpCashflow || canReadOpPayables;
+  const canReadOrganizations = !!(canReadBaseOrganizations ?? canReadSysInstitution);
+  const hasRegistriesSection = canReadOrganizations || canReadBaseProcedures || canReadBaseHealthPlans || canReadBasePractitioners || canReadBaseStaff;
   
   // Management (BUSINESS)
   const hasMgmtIndicators = !!canReadMgmtIndicators;
@@ -93,9 +98,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // System (ARCH)
   const hasSysSettings = !!canReadSysSettings;
   const hasSysUsers = !!canReadSysUsers;
-  const hasSysInstitution = !!canReadSysInstitution;
   const hasSysAudit = !!canReadSysAudit;
-  const hasSystemSection = hasSysSettings || hasSysUsers || hasSysInstitution || hasSysAudit;
+  const hasSystemSection = hasSysSettings || hasSysUsers || hasSysAudit;
 
   // Platform (ARCH - Owner)
   const hasPlatformSettings = !!canReadPlatformSettings;
@@ -110,19 +114,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Ensures that upon tab switch or activation, the corresponding section is opened
   useEffect(() => {
     if (!activeTab) return;
-    if (activeTab === 'op_schedule' || activeTab === 'op_attendance') {
+    if (activeTab.startsWith('attendance_')) {
       setOpenSidebarSections((prev) => new Set(prev).add('attendance'));
-    } else if (activeTab === 'op_patients' || activeTab === 'op_consultations' || activeTab === 'op_pep') {
+    } else if (activeTab.startsWith('clinical_')) {
       setOpenSidebarSections((prev) => new Set(prev).add('clinical'));
-    } else if (activeTab === 'op_billing' || activeTab === 'op_cashflow' || activeTab === 'op_payables') {
+    } else if (activeTab.startsWith('financial_')) {
       setOpenSidebarSections((prev) => new Set(prev).add('financial'));
-    } else if (activeTab === 'base_staff' || activeTab === 'base_health_plans' || activeTab === 'base_procedures') {
+    } else if (activeTab.startsWith('registries_')) {
       setOpenSidebarSections((prev) => new Set(prev).add('registries'));
-    } else if (activeTab === 'menu_mgmt_indicators' || activeTab === 'menu_mgmt_reports') {
+    } else if (activeTab.startsWith('management_')) {
       setOpenSidebarSections((prev) => new Set(prev).add('management'));
-    } else if (activeTab === 'menu_sys_settings' || activeTab === 'menu_sys_users' || activeTab === 'menu_sys_institution' || activeTab === 'menu_sys_audit') {
+    } else if (activeTab.startsWith('system_')) {
       setOpenSidebarSections((prev) => new Set(prev).add('system'));
-    } else if (activeTab === 'menu_platform_settings' || activeTab === 'menu_platform_tenants' || activeTab === 'menu_platform_api_keys' || activeTab === 'menu_platform_webhooks' || activeTab === 'menu_platform_policies') {
+    } else if (activeTab.startsWith('platform_')) {
       setOpenSidebarSections((prev) => new Set(prev).add('platform'));
     }
   }, [activeTab]);
@@ -366,8 +370,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           t('NAV_SECTION_ATTENDANCE'),
           hasAttendanceSection,
           <>
-            {renderSidebarNavItem('op_schedule', t('NAV_ATTENDANCE_SCHEDULE'), canReadOpSchedule)}
-            {renderSidebarNavItem('op_attendance', t('NAV_ATTENDANCE_QUEUE'), canReadOpAttendance)}
+            {renderSidebarNavItem('attendance_schedule', t('NAV_ATTENDANCE_SCHEDULE'), canReadOpSchedule)}
+            {renderSidebarNavItem('attendance_queue', t('NAV_ATTENDANCE_QUEUE'), canReadOpAttendance)}
           </>
         )}
 
@@ -378,9 +382,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           t('NAV_SECTION_CLINICAL'),
           hasClinicalSection,
           <>
-            {renderSidebarNavItem('op_patients', t('NAV_CLINICAL_PATIENTS'), canReadOpPatients)}
-            {renderSidebarNavItem('op_consultations', t('NAV_CLINICAL_CONSULTATIONS'), canReadOpConsultations)}
-            {renderSidebarNavItem('op_pep', t('NAV_CLINICAL_PEP'), canReadOpPep)}
+            {renderSidebarNavItem('clinical_patients', t('NAV_CLINICAL_PATIENTS'), canReadOpPatients)}
+            {renderSidebarNavItem('clinical_consultations', t('NAV_CLINICAL_CONSULTATIONS'), canReadOpConsultations)}
+            {renderSidebarNavItem('clinical_records', t('NAV_CLINICAL_PEP'), canReadOpPep)}
           </>
         )}
 
@@ -391,9 +395,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           t('NAV_SECTION_FINANCIAL'),
           hasFinancialSection,
           <>
-            {renderSidebarNavItem('op_billing', t('NAV_FINANCIAL_BILLING'), canReadOpBilling)}
-            {renderSidebarNavItem('op_cashflow', t('NAV_FINANCIAL_CASHFLOW'), canReadOpCashflow)}
-            {renderSidebarNavItem('op_payables', t('NAV_FINANCIAL_PAYABLES'), canReadOpPayables)}
+            {renderSidebarNavItem('financial_billing', t('NAV_FINANCIAL_BILLING'), canReadOpBilling)}
+            {renderSidebarNavItem('financial_cashflow', t('NAV_FINANCIAL_CASHFLOW'), canReadOpCashflow)}
+            {renderSidebarNavItem('financial_payables', t('NAV_FINANCIAL_PAYABLES'), canReadOpPayables)}
           </>
         )}
 
@@ -404,9 +408,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           t('NAV_SECTION_BASE_REGISTRIES'),
           hasRegistriesSection,
           <>
-            {renderSidebarNavItem('base_staff', t('NAV_BASE_STAFF'), canReadBaseStaff)}
-            {renderSidebarNavItem('base_health_plans', t('NAV_BASE_HEALTH_PLANS'), canReadBaseHealthPlans)}
-            {renderSidebarNavItem('base_procedures', t('NAV_BASE_PROCEDURES'), canReadBaseProcedures)}
+            {renderSidebarNavItem('registries_organizations', t('NAV_BASE_ORGANIZATIONS'), canReadOrganizations)}
+            {renderSidebarNavItem('registries_practitioners', t('NAV_BASE_PRACTITIONERS'), !!canReadBasePractitioners)}
+            {renderSidebarNavItem('registries_staff', t('NAV_BASE_STAFF'), canReadBaseStaff)}
+            {renderSidebarNavItem('registries_health_plans', t('NAV_BASE_HEALTH_PLANS'), canReadBaseHealthPlans)}
+            {renderSidebarNavItem('registries_procedures', t('NAV_BASE_PROCEDURES'), canReadBaseProcedures)}
           </>
         )}
 
@@ -417,8 +423,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           t('NAV_SECTION_MANAGEMENT'),
           hasManagementSection,
           <>
-            {renderSidebarNavItem('menu_mgmt_indicators', t('NAV_MGMT_INDICATORS'), hasMgmtIndicators)}
-            {renderSidebarNavItem('menu_mgmt_reports', t('NAV_MGMT_REPORTS'), hasMgmtReports)}
+            {renderSidebarNavItem('management_metrics', t('NAV_MGMT_INDICATORS'), hasMgmtIndicators)}
+            {renderSidebarNavItem('management_reports', t('NAV_MGMT_REPORTS'), hasMgmtReports)}
           </>
         )}
 
@@ -429,10 +435,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           t('NAV_SECTION_SYSTEM'),
           hasSystemSection,
           <>
-            {renderSidebarNavItem('menu_sys_settings', t('NAV_SYS_SETTINGS'), hasSysSettings)}
-            {renderSidebarNavItem('menu_sys_users', t('NAV_SYS_USERS'), hasSysUsers)}
-            {renderSidebarNavItem('menu_sys_institution', t('NAV_SYS_INSTITUTION'), hasSysInstitution)}
-            {renderSidebarNavItem('menu_sys_audit', t('NAV_SYS_AUDIT'), hasSysAudit)}
+            {renderSidebarNavItem('system_users', t('NAV_SYS_USERS'), hasSysUsers)}
+            {renderSidebarNavItem('system_settings', t('NAV_SYS_SETTINGS'), hasSysSettings)}
+            {renderSidebarNavItem('system_audit', t('NAV_SYS_AUDIT'), hasSysAudit)}
           </>
         )}
 
@@ -443,11 +448,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           t('NAV_SECTION_PLATFORM'),
           hasPlatformSection,
           <>
-            {renderSidebarNavItem('menu_platform_settings', t('NAV_PLATFORM_SETTINGS'), hasPlatformSettings)}
-            {renderSidebarNavItem('menu_platform_tenants', t('NAV_PLATFORM_TENANTS'), hasPlatformTenants)}
-            {renderSidebarNavItem('menu_platform_api_keys', t('NAV_PLATFORM_API_KEYS'), hasPlatformApiKeys)}
-            {renderSidebarNavItem('menu_platform_webhooks', t('NAV_PLATFORM_WEBHOOKS'), hasPlatformWebhooks)}
-            {renderSidebarNavItem('menu_platform_policies', t('NAV_PLATFORM_POLICIES'), hasPlatformPolicies)}
+            {renderSidebarNavItem('platform_tenants', t('NAV_PLATFORM_TENANTS'), hasPlatformTenants)}
+            {renderSidebarNavItem('platform_settings', t('NAV_PLATFORM_SETTINGS'), hasPlatformSettings)}
+            {renderSidebarNavItem('platform_api_keys', t('NAV_PLATFORM_API_KEYS'), hasPlatformApiKeys)}
+            {renderSidebarNavItem('platform_integrations', t('NAV_PLATFORM_WEBHOOKS'), hasPlatformWebhooks)}
+            {renderSidebarNavItem('platform_policies', t('NAV_PLATFORM_POLICIES'), hasPlatformPolicies)}
           </>
         )}
 
