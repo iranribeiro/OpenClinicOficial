@@ -109,6 +109,9 @@ program
   .option('--port <port>', 'Database port')
   .option('--database <database>', 'Database name')
   .option('--output <path>', 'Output .dump file path')
+  .option('--secret <name>', 'Secret logical name, .env variable, or file name (e.g. openclinic-prod-owner-postgres-credentials)')
+  .option('--provider <provider>', 'Secrets provider: file (default: ./secrets or /run/secrets), gsm, or aws', 'file')
+  .option('--non-interactive', 'Executes backup without interactive prompts using secrets/defaults')
   .action((options) => dbBackup(options));
 
 program

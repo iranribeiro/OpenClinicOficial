@@ -123,6 +123,168 @@ export function tryLoadLocalAppSecret(environment: Record<string, string | undef
   tryLoadLocalSecret('DATABASE_URL', secretName, environment);
 }
 
+export type DatabaseSecretProvider = 'file' | 'gsm' | 'aws';
+
+export interface ResolvedDatabaseSecret {
+  host: string;
+  port: number;
+  database: string;
+  user: string;
+  password?: string;
+  url: string;
+  secretName: string;
+  envKey?: string;
+  provider?: DatabaseSecretProvider;
+}
+
+/**
+ * Loads and parses database credentials from a secret file or .env secret variable name.
+ * Accepts:
+ *   - Environment variable names (e.g. 'DB_OWNER_SECRET_NAME', 'DB_REMOTE_OWNER_SECRET_NAME')
+ *   - Logical secret names (e.g. 'openclinic-dev-owner-postgres-credentials', 'openclinic-prod-owner-postgres-credentials')
+ *   - Relative or absolute file paths (e.g. './secrets/openclinic-prod-owner-postgres-credentials.json')
+ */
+export function loadDatabaseSecret(
+  secretIdentifierOrEnvKey: string,
+  provider?: DatabaseSecretProvider
+): ResolvedDatabaseSecret;
+export function loadDatabaseSecret(
+  secretIdentifierOrEnvKey: string,
+  environment?: Record<string, string | undefined>,
+  provider?: DatabaseSecretProvider
+): ResolvedDatabaseSecret;
+export function loadDatabaseSecret(
+  secretIdentifierOrEnvKey: string,
+  environmentOrProvider?: Record<string, string | undefined> | DatabaseSecretProvider,
+  explicitProvider?: DatabaseSecretProvider
+): ResolvedDatabaseSecret {
+  let environment: Record<string, string | undefined> = process.env;
+  let provider: DatabaseSecretProvider = 'file';
+
+  if (typeof environmentOrProvider === 'string') {
+    provider = environmentOrProvider;
+  } else if (environmentOrProvider && typeof environmentOrProvider === 'object') {
+    environment = environmentOrProvider;
+    if (explicitProvider) {
+      provider = explicitProvider;
+    } else if (environment['SECRETS_PROVIDER']) {
+      provider = environment['SECRETS_PROVIDER'] as DatabaseSecretProvider;
+    }
+  }
+
+  let envKey: string | undefined;
+  let secretName = secretIdentifierOrEnvKey.trim();
+
+  // If identifier is an existing environment variable pointing to a secret name:
+  if (environment[secretName]) {
+    envKey = secretName;
+    secretName = environment[secretName]!.trim();
+  }
+
+  if (provider === 'gsm') {
+    throw new Error(`Google Secret Manager provider not configured for "${secretName}".`);
+  }
+  if (provider === 'aws') {
+    throw new Error(`AWS Secrets Manager provider not configured for "${secretName}".`);
+  }
+
+  const customDir = environment['SECRETS_DIR'];
+  const searchDirs: string[] = [
+    ...(customDir ? [path.resolve(process.cwd(), customDir)] : []),
+    path.resolve(process.cwd(), 'secrets'),
+    '/run/secrets',
+    path.resolve(process.cwd(), '../secrets'),
+    path.resolve(process.cwd(), '../../secrets'),
+  ];
+
+  let rawContent: string | null = null;
+  let resolvedPath: string | null = null;
+
+  // 1. Direct file check
+  if (fs.existsSync(secretName) && fs.statSync(secretName).isFile()) {
+    resolvedPath = path.resolve(secretName);
+    rawContent = fs.readFileSync(resolvedPath, 'utf8').trim();
+  } else {
+    // 2. Search candidates
+    const candidateFilenames = [
+      secretName,
+      `${secretName}.json`,
+      `${secretName}.txt`,
+    ];
+
+    for (const dir of searchDirs) {
+      for (const filename of candidateFilenames) {
+        const candidatePath = path.resolve(dir, filename);
+        if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile()) {
+          resolvedPath = candidatePath;
+          rawContent = fs.readFileSync(resolvedPath, 'utf8').trim();
+          break;
+        }
+      }
+      if (rawContent) break;
+    }
+  }
+
+  if (!rawContent || !resolvedPath) {
+    const searchedIn = searchDirs.join(', ');
+    throw new Error(`Database secret "${secretName}"${envKey ? ` (from .env ${envKey})` : ''} not found in search locations: ${searchedIn}.`);
+  }
+
+  const url = parseDatabaseSecret(rawContent, secretName, environment);
+  const parsed = parseDatabaseUrl(url);
+
+  if (!parsed.user || !parsed.database) {
+    throw new Error(`Secret "${secretName}" does not specify valid database connection parameters.`);
+  }
+
+  return {
+    host: parsed.host || 'localhost',
+    port: Number(parsed.port || SYSTEM_DEFAULTS.DEFAULT_DB_PORT),
+    database: parsed.database,
+    user: parsed.user,
+    password: parsed.password,
+    url,
+    secretName,
+    envKey,
+    provider,
+  };
+}
+
+/**
+ * Discovers available database secrets configured in .env or residing in the secrets directory.
+ */
+export function getAvailableDatabaseSecrets(
+  environment: Record<string, string | undefined> = process.env
+): Array<{ label: string; secretName: string; envKey?: string; isRemote: boolean }> {
+  const result: Array<{ label: string; secretName: string; envKey?: string; isRemote: boolean }> = [];
+  const knownEnvKeys = [
+    { key: 'DB_OWNER_SECRET_NAME', desc: 'Local Owner (from .env DB_OWNER_SECRET_NAME)' },
+    { key: 'DB_REMOTE_OWNER_SECRET_NAME', desc: 'Remote Owner (from .env DB_REMOTE_OWNER_SECRET_NAME)' },
+    { key: 'DB_APP_SECRET_NAME', desc: 'Local App (from .env DB_APP_SECRET_NAME)' },
+    { key: 'DB_REMOTE_APP_SECRET_NAME', desc: 'Remote App (from .env DB_REMOTE_APP_SECRET_NAME)' },
+  ];
+
+  for (const { key, desc } of knownEnvKeys) {
+    const secretName = environment[key];
+    if (secretName) {
+      try {
+        const creds = loadDatabaseSecret(secretName, environment);
+        const isRemote = !isLocalHost(creds.host);
+        result.push({
+          label: `${desc} -> ${secretName} [${creds.database}@${creds.host}]`,
+          secretName,
+          envKey: key,
+          isRemote,
+        });
+      } catch {
+        // Skip unresolvable secrets
+      }
+    }
+  }
+
+  return result;
+}
+
 /**
  * Resolves standard database configuration directly from atomic environment variables:
  * DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS via getDatabaseEnv().

@@ -23,14 +23,29 @@ export interface PgRestoreConfig extends PgConnectionConfig {
 }
 
 /**
- * Formats a date into a clean, human-readable ISO-like timestamp for backup filenames (YYYYMMDD_HHmmss).
+ * Formats a date into a clean, unambiguous ISO-8601 UTC timestamp for backup filenames (YYYYMMDDTHHmmssZ).
+ * The 'T' separates date and time, while 'Z' explicitly denotes UTC/Zulu timezone.
  */
 export function formatBackupTimestamp(date: Date = new Date()): string {
   return date
     .toISOString()
     .replace(/[-:]/g, '')
-    .replace('T', '_')
-    .split('.')[0]!;
+    .split('.')[0]! + 'Z';
+}
+
+/**
+ * Sanitizes a host or IP into a safe, alphanumeric identifier for backup filenames (e.g. 157-90-165-48 or localhost).
+ */
+export function sanitizeHostIdentifier(host: string): string {
+  const clean = host
+    .toLowerCase()
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/:\d+$/, '')
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return clean || 'localhost';
 }
 
 /**
