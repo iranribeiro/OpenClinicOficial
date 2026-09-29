@@ -34,25 +34,9 @@ describe('Application Resources Manifest (SSOT)', () => {
     }
   });
 
-  it('should conform to canonical naming prefixes based on section', () => {
+  it('should conform to canonical naming prefixes based on section (Option A: <section>_<item>)', () => {
     for (const res of APP_RESOURCE_MANIFEST) {
-      if (res.section === 'attendance') {
-        expect(res.code.startsWith('op_')).toBe(true);
-      } else if (res.section === 'clinical') {
-        expect(res.code.startsWith('op_')).toBe(true);
-      } else if (res.section === 'financial') {
-        expect(res.code.startsWith('op_')).toBe(true);
-      } else if (res.section === 'registries') {
-        expect(res.code.startsWith('base_')).toBe(true);
-      } else if (res.section === 'management') {
-        expect(res.code.startsWith('menu_mgmt_')).toBe(true);
-      } else if (res.section === 'system') {
-        expect(res.code.startsWith('menu_sys_')).toBe(true);
-      } else if (res.section === 'platform') {
-        expect(res.code.startsWith('menu_platform_')).toBe(true);
-      } else if (res.section === 'account') {
-        expect(res.code.startsWith('menu_')).toBe(true);
-      }
+      expect(res.code.startsWith(`${res.section}_`)).toBe(true);
     }
   });
 
@@ -60,6 +44,14 @@ describe('Application Resources Manifest (SSOT)', () => {
     for (const res of APP_RESOURCE_MANIFEST) {
       if (res.route) {
         expect(res.route).toMatch(/^\/[a-z0-9-]+(\/[a-z0-9-]+)*$/);
+      }
+    }
+  });
+
+  it('should strictly align every route with its section namespace (/<section>/...)', () => {
+    for (const res of APP_RESOURCE_MANIFEST) {
+      if (res.route) {
+        expect(res.route.startsWith(`/${res.section}/`)).toBe(true);
       }
     }
   });

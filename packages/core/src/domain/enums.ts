@@ -130,6 +130,16 @@ export const LoginIdentifierType = {
 export type LoginIdentifierType = (typeof LoginIdentifierType)[keyof typeof LoginIdentifierType];
 export type LoginIdentifierTypeType = LoginIdentifierType;
 
+export const LoginMethod = {
+  PASSWORD: 'PASSWORD',
+  OTP: 'OTP',
+  MAGIC_LINK: 'MAGIC_LINK',
+  SSO: 'SSO',
+} as const;
+export type LoginMethod = (typeof LoginMethod)[keyof typeof LoginMethod];
+export type LoginMethodType = LoginMethod;
+
+
 export const NodeEnvironment = {
   DEVELOPMENT: 'development',
   STAGING: 'staging',
@@ -168,3 +178,82 @@ export const SecretsProvider = {
 } as const;
 export type SecretsProvider = (typeof SecretsProvider)[keyof typeof SecretsProvider];
 export type SecretsProviderType = SecretsProvider;
+
+export const CouncilType = {
+  CRM: 'CRM',
+  COREN: 'COREN',
+  CRO: 'CRO',
+  CRP: 'CRP',
+  CREFITO: 'CREFITO',
+  CRF: 'CRF',
+  CRN: 'CRN',
+  RMS: 'RMS',
+  OTHER: 'OTHER',
+} as const;
+export type CouncilType = (typeof CouncilType)[keyof typeof CouncilType];
+export type CouncilTypeType = CouncilType;
+
+export const RegistrationStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  EXPIRED: 'EXPIRED',
+} as const;
+export type RegistrationStatus = (typeof RegistrationStatus)[keyof typeof RegistrationStatus];
+export type RegistrationStatusType = RegistrationStatus;
+
+export const QualificationType = {
+  DEGREE: 'DEGREE',
+  RESIDENCY: 'RESIDENCY',
+  TITLE: 'TITLE',
+  FELLOWSHIP: 'FELLOWSHIP',
+  CERTIFICATE: 'CERTIFICATE',
+  TRAINING: 'TRAINING',
+  OTHER: 'OTHER',
+} as const;
+export type QualificationType = (typeof QualificationType)[keyof typeof QualificationType];
+export type QualificationTypeType = QualificationType;
+
+export const StaffType = {
+  ADMINISTRATIVE: 'ADMINISTRATIVE',
+  RECEPTIONIST: 'RECEPTIONIST',
+  ASSISTANT: 'ASSISTANT',
+  MANAGER: 'MANAGER',
+  FINANCIAL: 'FINANCIAL',
+  IT_SUPPORT: 'IT_SUPPORT',
+  OTHER: 'OTHER',
+} as const;
+export type StaffType = (typeof StaffType)[keyof typeof StaffType];
+export type StaffTypeType = StaffType;
+
+export const ContractType = {
+  CLT: 'CLT',
+  PJ: 'PJ',
+  INTERN: 'INTERN',
+  TEMPORARY: 'TEMPORARY',
+  VOLUNTEER: 'VOLUNTEER',
+  OTHER: 'OTHER',
+} as const;
+export type ContractType = (typeof ContractType)[keyof typeof ContractType];
+export type ContractTypeType = ContractType;
+
+export const DigitalSignatureType = {
+  NONE: 'NONE',
+  CLOUD_PSC: 'CLOUD_PSC',
+  CERTIFICATE_A1: 'CERTIFICATE_A1',
+} as const;
+export type DigitalSignatureType = (typeof DigitalSignatureType)[keyof typeof DigitalSignatureType];
+export type DigitalSignatureTypeType = DigitalSignatureType;
+
+export const StaffQualificationType = {
+  CERTIFICATE: 'CERTIFICATE',
+  TRAINING: 'TRAINING',
+  DIPLOMA: 'DIPLOMA',
+  LICENSE: 'LICENSE',
+  OTHER: 'OTHER',
+} as const;
+export type StaffQualificationType = (typeof StaffQualificationType)[keyof typeof StaffQualificationType];
+export type StaffQualificationTypeType = StaffQualificationType;
+
+export { CountryCode } from './value-objects/country.vo.js';
+

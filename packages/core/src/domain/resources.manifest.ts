@@ -17,11 +17,12 @@ export interface ResourceManifestItem {
 /**
  * 🧱 Canonical Application Resources Manifest (SSOT)
  * Single Source of Truth for all Clinical, Financial, Operational, and Architecture resources.
+ * Follows Option A canonical naming standard: <section>_<item>
  */
 export const APP_RESOURCE_MANIFEST = [
   // ── 1. BUSINESS Context: Attendance ──
   {
-    code: 'op_schedule',
+    code: 'attendance_schedule',
     section: 'attendance',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -34,7 +35,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Scheduling consultations, clinical calendar, and appointments',
   },
   {
-    code: 'op_attendance',
+    code: 'attendance_queue',
     section: 'attendance',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -49,7 +50,7 @@ export const APP_RESOURCE_MANIFEST = [
 
   // ── 2. BUSINESS Context: Clinical ──
   {
-    code: 'op_patients',
+    code: 'clinical_patients',
     section: 'clinical',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -62,7 +63,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'General patient registry, medical history, and documents',
   },
   {
-    code: 'op_consultations',
+    code: 'clinical_consultations',
     section: 'clinical',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -75,7 +76,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Outpatient medical consultations, prescriptions, and lab test requests',
   },
   {
-    code: 'op_pep',
+    code: 'clinical_records',
     section: 'clinical',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -90,7 +91,7 @@ export const APP_RESOURCE_MANIFEST = [
 
   // ── 3. BUSINESS Context: Financial ──
   {
-    code: 'op_billing',
+    code: 'financial_billing',
     section: 'financial',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -103,7 +104,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Invoice billing, TISS/TUSS claims, and medical fees',
   },
   {
-    code: 'op_cashflow',
+    code: 'financial_cashflow',
     section: 'financial',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -116,7 +117,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Daily cash management, financial transactions, and cash flow',
   },
   {
-    code: 'op_payables',
+    code: 'financial_payables',
     section: 'financial',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -131,7 +132,33 @@ export const APP_RESOURCE_MANIFEST = [
 
   // ── 4. BUSINESS Context: Registries ──
   {
-    code: 'base_staff',
+    code: 'registries_organizations',
+    section: 'registries',
+    parentCode: null,
+    resourceType: ResourceType.MENU,
+    context: ApplicationContext.BUSINESS,
+    labelKey: 'NAV_BASE_ORGANIZATIONS',
+    icon: 'building',
+    route: '/registries/organizations',
+    sortOrder: 85,
+    minRole: UserRole.USER,
+    description: 'Healthcare organizations, healthcare establishments (EAS/CNES), and clinical rooms/offices',
+  },
+  {
+    code: 'registries_practitioners',
+    section: 'registries',
+    parentCode: null,
+    resourceType: ResourceType.MENU,
+    context: ApplicationContext.BUSINESS,
+    labelKey: 'NAV_BASE_PRACTITIONERS',
+    icon: 'activity',
+    route: '/registries/practitioners',
+    sortOrder: 90,
+    minRole: UserRole.USER,
+    description: 'Healthcare practitioners, physicians, nurses, specialties and council licenses',
+  },
+  {
+    code: 'registries_staff',
     section: 'registries',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -139,12 +166,12 @@ export const APP_RESOURCE_MANIFEST = [
     labelKey: 'NAV_BASE_STAFF',
     icon: 'user-check',
     route: '/registries/staff',
-    sortOrder: 90,
+    sortOrder: 95,
     minRole: UserRole.USER,
-    description: 'Staff directory, clinical team, and administrative employees',
+    description: 'Administrative staff, receptionists, managers, and operational employees',
   },
   {
-    code: 'base_health_plans',
+    code: 'registries_health_plans',
     section: 'registries',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -157,7 +184,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Health insurance operators, accredited plans, and coverage rules',
   },
   {
-    code: 'base_procedures',
+    code: 'registries_procedures',
     section: 'registries',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -169,23 +196,10 @@ export const APP_RESOURCE_MANIFEST = [
     minRole: UserRole.USER,
     description: 'Procedures catalog, TUSS table, and medical pricing',
   },
-  {
-    code: 'base_shifts',
-    section: 'registries',
-    parentCode: null,
-    resourceType: ResourceType.MENU,
-    context: ApplicationContext.BUSINESS,
-    labelKey: 'NAV_BASE_SHIFTS',
-    icon: 'clock',
-    route: '/registries/shifts',
-    sortOrder: 115,
-    minRole: UserRole.USER,
-    description: 'Work shifts, duty rosters, and care schedules',
-  },
 
   // ── 5. BUSINESS Context: Management ──
   {
-    code: 'menu_mgmt_indicators',
+    code: 'management_metrics',
     section: 'management',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -198,7 +212,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Executive dashboard, clinic occupancy rate, and clinical metrics',
   },
   {
-    code: 'menu_mgmt_reports',
+    code: 'management_reports',
     section: 'management',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -213,20 +227,7 @@ export const APP_RESOURCE_MANIFEST = [
 
   // ── 6. ARCH Context: System ──
   {
-    code: 'menu_sys_settings',
-    section: 'system',
-    parentCode: null,
-    resourceType: ResourceType.MENU,
-    context: ApplicationContext.ARCH,
-    labelKey: 'NAV_SYS_SETTINGS',
-    icon: 'sliders',
-    route: '/system/settings',
-    sortOrder: 200,
-    minRole: UserRole.ADMIN,
-    description: 'System preferences, scheduling rules, operating hours, and operational policies',
-  },
-  {
-    code: 'menu_sys_users',
+    code: 'system_users',
     section: 'system',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -239,27 +240,27 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'User accounts management, access profiles, and RBAC matrix',
   },
   {
-    code: 'menu_sys_institution',
+    code: 'system_settings',
     section: 'system',
     parentCode: null,
     resourceType: ResourceType.MENU,
     context: ApplicationContext.ARCH,
-    labelKey: 'NAV_SYS_INSTITUTION',
-    icon: 'building',
-    route: '/system/organizations',
+    labelKey: 'NAV_SYS_SETTINGS',
+    icon: 'sliders',
+    route: '/system/settings',
     sortOrder: 220,
     minRole: UserRole.ADMIN,
-    description: 'Clinic organizational details, fiscal registration, logo, and technical leads',
+    description: 'System preferences, scheduling rules, operating hours, and operational policies',
   },
   {
-    code: 'menu_sys_audit',
+    code: 'system_audit',
     section: 'system',
     parentCode: null,
     resourceType: ResourceType.MENU,
     context: ApplicationContext.ARCH,
     labelKey: 'NAV_SYS_AUDIT',
     icon: 'shield',
-    route: '/system/audit-logs',
+    route: '/system/audit',
     sortOrder: 230,
     minRole: UserRole.ADMIN,
     description: 'Immutable audit trail, EHR access logs, and compliance records',
@@ -267,20 +268,7 @@ export const APP_RESOURCE_MANIFEST = [
 
   // ── 7. ARCH Context: Platform (Exclusive to OWNER) ──
   {
-    code: 'menu_platform_settings',
-    section: 'platform',
-    parentCode: null,
-    resourceType: ResourceType.MENU,
-    context: ApplicationContext.ARCH,
-    labelKey: 'NAV_PLATFORM_SETTINGS',
-    icon: 'sliders',
-    route: '/platform/settings',
-    sortOrder: 300,
-    minRole: UserRole.OWNER,
-    description: 'Global infrastructure parameters, authentication, and security governance',
-  },
-  {
-    code: 'menu_platform_tenants',
+    code: 'platform_tenants',
     section: 'platform',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -288,12 +276,25 @@ export const APP_RESOURCE_MANIFEST = [
     labelKey: 'NAV_PLATFORM_TENANTS',
     icon: 'grid',
     route: '/platform/tenants',
-    sortOrder: 310,
+    sortOrder: 300,
     minRole: UserRole.OWNER,
     description: 'Multi-tenant organization management, instance isolation, and provisioning',
   },
   {
-    code: 'menu_platform_api_keys',
+    code: 'platform_settings',
+    section: 'platform',
+    parentCode: null,
+    resourceType: ResourceType.MENU,
+    context: ApplicationContext.ARCH,
+    labelKey: 'NAV_PLATFORM_SETTINGS',
+    icon: 'sliders',
+    route: '/platform/settings',
+    sortOrder: 310,
+    minRole: UserRole.OWNER,
+    description: 'Global infrastructure parameters, branding, application version, and governance',
+  },
+  {
+    code: 'platform_api_keys',
     section: 'platform',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -306,7 +307,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'API keys management for integrations and M2M credentials',
   },
   {
-    code: 'menu_platform_webhooks',
+    code: 'platform_integrations',
     section: 'platform',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -319,7 +320,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'External connectors, event queues, orchestration, and webhooks',
   },
   {
-    code: 'menu_platform_policies',
+    code: 'platform_policies',
     section: 'platform',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -334,7 +335,7 @@ export const APP_RESOURCE_MANIFEST = [
 
   // ── 8. ARCH Context: User Account ──
   {
-    code: 'menu_profile',
+    code: 'account_profile',
     section: 'account',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -347,7 +348,7 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Viewing and editing user account profile details',
   },
   {
-    code: 'menu_password',
+    code: 'account_security',
     section: 'account',
     parentCode: null,
     resourceType: ResourceType.MENU,
@@ -360,14 +361,14 @@ export const APP_RESOURCE_MANIFEST = [
     description: 'Credential management and password reset',
   },
   {
-    code: 'menu_help',
+    code: 'account_help',
     section: 'account',
     parentCode: null,
     resourceType: ResourceType.MENU,
     context: ApplicationContext.ARCH,
     labelKey: 'USER_MENU_HELP',
     icon: 'help-circle',
-    route: '/help',
+    route: '/account/help',
     sortOrder: 420,
     minRole: UserRole.USER,
     description: 'Help center, technical documentation, and support tickets',

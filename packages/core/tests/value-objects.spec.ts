@@ -17,8 +17,14 @@ import {
   hashPassword,
   verifyPassword,
   Country,
+  CountryCode,
   STANDARD_COUNTRIES,
+  COUNTRY_METADATA,
+  DEFAULT_PLATFORM_MANIFEST,
   Website,
+  CouncilRegistration,
+  CouncilType,
+  Rqe,
 } from '../src/index.js';
 
 
@@ -395,6 +401,19 @@ describe('Value Objects Suite', () => {
   });
 
   describe('Country (ISO 3166-1 alpha-3)', () => {
+    it('should expose CountryCode enum and canonical aliases', () => {
+      expect(CountryCode.BRA).toBe('BRA');
+      expect(CountryCode.BRAZIL).toBe('BRA');
+      expect(CountryCode.PORTUGAL).toBe('PRT');
+      expect(CountryCode.UNITED_STATES).toBe('USA');
+      expect(Country.Code.BRAZIL).toBe('BRA');
+      expect(Country.BRAZIL).toBe('BRA');
+
+      // Platform Manifest holds system-wide defaults, not the domain Value Object
+      expect(DEFAULT_PLATFORM_MANIFEST.DEFAULT_COUNTRY).toBe(CountryCode.BRAZIL);
+      expect(DEFAULT_PLATFORM_MANIFEST.DEFAULT_DIALING_CODE).toBe('+55');
+    });
+
     it('should validate and create valid country codes', () => {
       expect(Country.isValid('BRA')).toBe(true);
       expect(Country.isValid('bra')).toBe(true);
@@ -403,6 +422,8 @@ describe('Value Objects Suite', () => {
 
       const country = Country.create('bra');
       expect(country.value).toBe('BRA');
+      expect(country.code).toBe('BRA');
+      expect(country.toString()).toBe('BRA');
     });
 
     it('should reject invalid country codes', () => {
@@ -411,6 +432,39 @@ describe('Value Objects Suite', () => {
       expect(Country.isValid('BR')).toBe(false); // 2 chars (alpha-2)
       expect(Country.isValid('XYZ')).toBe(false); // not in standard list
       expect(() => Country.create('XYZ')).toThrow();
+
+      expect(Country.tryCreate('XYZ')).toBeNull();
+      expect(Country.tryCreate('BRA')).toBeInstanceOf(Country);
+    });
+
+    it('should return rich instance properties and localized metadata', () => {
+      const brazil = Country.create(CountryCode.BRAZIL);
+      expect(brazil.isBrazil).toBe(true);
+      expect(brazil.alpha2).toBe('BR');
+      expect(brazil.ddi).toBe('+55');
+      expect(brazil.flag).toBe('🇧🇷');
+      expect(brazil.namePt).toBe('Brasil');
+      expect(brazil.nameEn).toBe('Brazil');
+      expect(brazil.getName('pt-BR')).toBe('Brasil');
+      expect(brazil.getName('en-US')).toBe('Brazil');
+      expect(brazil.format('pt-BR')).toBe('Brasil (BRA)');
+
+      const usa = Country.create(CountryCode.USA);
+      expect(usa.isBrazil).toBe(false);
+      expect(usa.alpha2).toBe('US');
+      expect(usa.ddi).toBe('+1');
+      expect(usa.flag).toBe('🇺🇸');
+      expect(usa.namePt).toBe('Estados Unidos');
+      expect(usa.nameEn).toBe('United States');
+
+      expect(Country.isBrazil('bra')).toBe(true);
+      expect(Country.isBrazil('PRT')).toBe(false);
+      expect(Country.isBrazil(null)).toBe(false);
+
+      const meta = Country.getMetadata('PRT');
+      expect(meta?.alpha2).toBe('PT');
+      expect(meta?.ddi).toBe('+351');
+      expect(COUNTRY_METADATA.PRT.namePt).toBe('Portugal');
     });
 
     it('should return localized country names and formatted options', () => {
@@ -462,6 +516,47 @@ describe('Value Objects Suite', () => {
       expect(() => Website.create('invalid')).toThrow();
     });
   });
+
+  describe('CouncilRegistration Value Object', () => {
+    it('should validate and create valid professional council registrations', () => {
+      expect(CouncilRegistration.isValid({ councilType: CouncilType.CRM, number: '123456', uf: 'SP' })).toBe(true);
+      expect(CouncilRegistration.isValid({ councilType: CouncilType.COREN, number: '98765-ENF', uf: 'RJ' })).toBe(true);
+      expect(CouncilRegistration.isValid({ councilType: CouncilType.CRO, number: '54321', uf: 'MG' })).toBe(true);
+
+      const reg = CouncilRegistration.create({ councilType: CouncilType.CRM, number: ' 123.456 ', uf: 'sp' });
+      expect(reg.councilType).toBe(CouncilType.CRM);
+      expect(reg.number).toBe('123456');
+      expect(reg.uf).toBe('SP');
+      expect(reg.format()).toBe('CRM/SP 123456');
+    });
+
+    it('should reject invalid council registrations', () => {
+      expect(CouncilRegistration.isValid({ councilType: 'INVALID' as any, number: '123456', uf: 'SP' })).toBe(false);
+      expect(CouncilRegistration.isValid({ councilType: CouncilType.CRM, number: '', uf: 'SP' })).toBe(false);
+      expect(CouncilRegistration.isValid({ councilType: CouncilType.CRM, number: '123456', uf: 'XX' })).toBe(false);
+      expect(() => CouncilRegistration.create({ councilType: CouncilType.CRM, number: '', uf: 'SP' })).toThrow();
+    });
+  });
+
+  describe('Rqe Value Object', () => {
+    it('should validate and create valid CFM RQE numbers', () => {
+      expect(Rqe.isValid('12345')).toBe(true);
+      expect(Rqe.isValid(' 45892 ')).toBe(true);
+      expect(Rqe.clean('RQE 45.892')).toBe('45892');
+
+      const rqe = Rqe.create('45892');
+      expect(rqe.value).toBe('45892');
+      expect(rqe.format()).toBe('RQE 45892');
+    });
+
+    it('should reject invalid RQE numbers', () => {
+      expect(Rqe.isValid('')).toBe(false);
+      expect(Rqe.isValid('   ')).toBe(false);
+      expect(Rqe.isValid('123456789')).toBe(false); // more than 8 digits
+      expect(() => Rqe.create('')).toThrow();
+    });
+  });
 });
+
 
 

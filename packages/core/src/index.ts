@@ -45,6 +45,8 @@ export {
   type SystemDefaults,
   TIME_CONSTANTS,
   type TimeConstants,
+  DEFAULT_PLATFORM_MANIFEST,
+  type PlatformManifest,
 } from './constants/index.js';
 export {
   UserRole,
@@ -74,6 +76,8 @@ export {
   type PermissionTargetTypeType,
   LoginIdentifierType,
   type LoginIdentifierTypeType,
+  LoginMethod,
+  type LoginMethodType,
   NodeEnvironment,
   type NodeEnvironmentType,
   Environment,
@@ -84,6 +88,20 @@ export {
   type LogLevelType,
   SecretsProvider,
   type SecretsProviderType,
+  CouncilType,
+  type CouncilTypeType,
+  RegistrationStatus,
+  type RegistrationStatusType,
+  QualificationType,
+  type QualificationTypeType,
+  StaffType,
+  type StaffTypeType,
+  ContractType,
+  type ContractTypeType,
+  DigitalSignatureType,
+  type DigitalSignatureTypeType,
+  StaffQualificationType,
+  type StaffQualificationTypeType,
 } from './domain/enums.js';
 export type {
   IAMCapabilityDTO,
@@ -93,23 +111,44 @@ export type {
   NavigationMenuGroupDTO,
 } from './domain/iam.dtos.js';
 export type {
+  OrganizationDTO,
+  CreateOrganizationDTO,
+  UpdateOrganizationDTO,
+  OrganizationUnitDTO,
+  CreateOrganizationUnitDTO,
+  UpdateOrganizationUnitDTO,
+  OrganizationSummaryDTO,
+  RoomType,
+  RoomDTO,
+  CreateRoomDTO,
+  UpdateRoomDTO,
+} from './domain/organization.dtos.js';
+export type {
   PatientGender,
   PatientDTO,
   CreatePatientDTO,
   PractitionerType,
   PractitionerDTO,
   CreatePractitionerDTO,
+  PractitionerRegistrationDTO,
+  CreatePractitionerRegistrationDTO,
+  SpecialtyDTO,
+  PractitionerSpecialtyDTO,
+  CreatePractitionerSpecialtyDTO,
+  PractitionerQualificationDTO,
+  CreatePractitionerQualificationDTO,
+  PractitionerAvailabilityDTO,
+  CreatePractitionerAvailabilityDTO,
+  StaffDTO,
+  CreateStaffDTO,
+  StaffQualificationDTO,
+  CreateStaffQualificationDTO,
   EncounterStatus,
   EncounterDTO,
   EncounterSummaryDTO,
   CreateEncounterDTO,
   HealthPlanDTO,
   ProcedureDTO,
-  RoomDTO,
-  AvailabilityDTO,
-  ScheduleBlockDTO,
-  AppointmentDTO,
-  AppointmentStatus,
 } from './domain/clinical.dtos.js';
 export {
   APP_RESOURCE_MANIFEST,
@@ -140,14 +179,20 @@ export {
   PasswordPolicy,
   type PasswordValidationResult,
   Country,
-  type CountryCode,
+  CountryCode,
+  type CountryCode as CountryCodeType,
   STANDARD_COUNTRIES,
   type CountryOption,
+  type CountryMetadata,
+  COUNTRY_METADATA,
   Website,
   IPv4Address,
   IPv6Address,
   IpAddress,
   type IpVersion,
+  CouncilRegistration,
+  type CouncilRegistrationProps,
+  Rqe,
 } from './domain/value-objects/index.js';
 export * as shared from './shared/index.js';
 export { createLogger, logger } from './logger/index.js';
@@ -155,3 +200,5 @@ export type { LoggerConfig, Logger } from './logger/index.js';
 export { createPool, withTransaction, getDatabaseEnv, resolveDatabaseUrl, resolveDatabaseOwnerUrl, parseDatabaseUrl, isDdlRole } from './database/index.js';
 export type { DbConfig, DatabaseEnvironment, Pool, PoolClient } from './database/index.js';
 export { parseDatabaseSecret, parseJwtSecret } from './server/index.js';
+
+
