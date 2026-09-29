@@ -43,7 +43,7 @@ export async function seedDemoDatabase(url: string): Promise<void> {
       const tables = await sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`;
       for (const table of tables) {
         await sql`LOCK TABLE ${sql('public')}.${sql(table.tablename)} IN SHARE ROW EXCLUSIVE MODE`;
-        if (table.tablename.startsWith('app_') || ['iam_users', 'iam_sessions', 'iam_user_groups', 'sys_audit_logs'].includes(table.tablename)) {
+        if ((table.tablename.startsWith('app_') && table.tablename !== 'app_specialties') || ['iam_users', 'iam_sessions', 'iam_user_groups', 'sys_audit_logs'].includes(table.tablename)) {
           const [row] = await sql`SELECT EXISTS (SELECT 1 FROM ${sql('public')}.${sql(table.tablename)} LIMIT 1) AS populated`;
           if (row?.populated) throw new Error('Demo seed refused: database already contains operational data.');
         }

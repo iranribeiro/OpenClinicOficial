@@ -53,6 +53,9 @@ try {
   if (await stage('core-build', ['node_modules/typescript/bin/tsc', '-p', 'packages/core/tsconfig.json'])) {
     throw new Error('Core build failed; remaining suites require its output');
   }
+  if (await stage('backend-build', ['node_modules/typescript/bin/tsc', '-p', 'packages/backend-api/tsconfig.json'])) {
+    throw new Error('Backend build failed; remaining suites require its output');
+  }
   await stage('backend-tests', ['node_modules/vitest/vitest.mjs', 'run', '--root', 'packages/backend-api', '--maxWorkers=2', '--testTimeout=30000']);
   const migrationTests = fs.readdirSync(path.join(root, 'infra/database/tests'))
     .filter(name => /\.test\.(ts|mjs)$/.test(name)).sort().map(name => `infra/database/tests/${name}`);

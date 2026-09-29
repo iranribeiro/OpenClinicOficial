@@ -151,7 +151,7 @@ test('fresh install, reference catalog and repeated migration preserve customize
   await isolated(async (url, sql) => {
     assert.equal((await migrateDatabase(url)).length, loadMigrations().length);
     const [tables] = await sql`SELECT count(*)::int AS count FROM pg_tables WHERE schemaname = 'public'`;
-    assert.equal(tables!.count, 24);
+    assert.equal(tables!.count, 31);
     const [users] = await sql`SELECT count(*)::int AS count FROM iam_users`;
     assert.equal(users!.count, 0);
     const [bindings] = await sql`SELECT count(*)::int AS count FROM iam_groups g JOIN sys_tenants t ON t.id = g.tenant_id WHERE t.slug = 'acme-organization'`;

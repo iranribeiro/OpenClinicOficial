@@ -31,7 +31,7 @@ export async function startApiHarness() {
       try {
         if (databaseCreated) await owner`DROP DATABASE ${owner(dbName)} WITH (FORCE)`;
         if (roleCreated) await owner`DROP ROLE ${owner(role)}`;
-      } finally { await owner.end(); fs.rmSync(folder, { recursive: true, force: true }); }
+      } finally { await owner.end(); try { fs.rmSync(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {} }
     }
   };
   try {
