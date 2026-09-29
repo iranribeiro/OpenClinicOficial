@@ -24,8 +24,9 @@ export const PoliciesTermsView: React.FC = () => {
             <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 8 }}>
               {t('POLICIES_TERMS_DESC')}
             </div>
-            <span style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 600, cursor: 'pointer' }}>
-              {t('POLICIES_VIEW_DOC')}
+            <span style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span>{t('POLICIES_VIEW_DOC')}</span>
+              <span>&rarr;</span>
             </span>
           </div>
 
@@ -36,8 +37,9 @@ export const PoliciesTermsView: React.FC = () => {
             <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 8 }}>
               {t('POLICIES_PRIVACY_DESC')}
             </div>
-            <span style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 600, cursor: 'pointer' }}>
-              {t('POLICIES_VIEW_DOC')}
+            <span style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span>{t('POLICIES_VIEW_DOC')}</span>
+              <span>&rarr;</span>
             </span>
           </div>
 
@@ -48,8 +50,9 @@ export const PoliciesTermsView: React.FC = () => {
             <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 8 }}>
               {t('POLICIES_DPA_DESC')}
             </div>
-            <span style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 600, cursor: 'pointer' }}>
-              {t('POLICIES_VIEW_DOC')}
+            <span style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span>{t('POLICIES_VIEW_DOC')}</span>
+              <span>&rarr;</span>
             </span>
           </div>
         </div>

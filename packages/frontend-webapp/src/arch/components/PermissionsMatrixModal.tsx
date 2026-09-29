@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ResourceAction, PermissionEffect, ApplicationContext, UserRole, PermissionTargetType, ROLE_HIERARCHY } from '@openclinic/core/shared';
 import { useI18n, type TranslationKey } from '../../i18n/index.js';
 import { AlertBanner, AlertBannerType } from '../../components/AlertBanner.js';
-import type { AclPermissionRecord } from '../../types/auth.js';
+import type { AclPermissionRecord } from '../types/auth.js';
 import type { ResourceTreeNode } from '../types/resource-tree.js';
 
 export interface PermissionTargetInfo {
@@ -57,8 +57,8 @@ const SIDEBAR_SECTIONS: MenuSectionSpec[] = [
     icon: '📋',
     context: ApplicationContext.BUSINESS,
     items: [
-      { code: 'op_schedule', icon: '📅', labelKey: 'NAV_ATTENDANCE_SCHEDULE' },
-      { code: 'op_attendance', icon: '📋', labelKey: 'NAV_ATTENDANCE_QUEUE' },
+      { code: 'attendance_schedule', icon: '📅', labelKey: 'NAV_ATTENDANCE_SCHEDULE' },
+      { code: 'attendance_queue', icon: '📋', labelKey: 'NAV_ATTENDANCE_QUEUE' },
     ],
   },
   {
@@ -67,9 +67,9 @@ const SIDEBAR_SECTIONS: MenuSectionSpec[] = [
     icon: '🩺',
     context: ApplicationContext.BUSINESS,
     items: [
-      { code: 'op_patients', icon: '🧑‍🤝‍🧑', labelKey: 'NAV_CLINICAL_PATIENTS' },
-      { code: 'op_consultations', icon: '🩺', labelKey: 'NAV_CLINICAL_CONSULTATIONS' },
-      { code: 'op_pep', icon: '📑', labelKey: 'NAV_CLINICAL_PEP' },
+      { code: 'clinical_patients', icon: '🧑‍🤝‍🧑', labelKey: 'NAV_CLINICAL_PATIENTS' },
+      { code: 'clinical_consultations', icon: '🩺', labelKey: 'NAV_CLINICAL_CONSULTATIONS' },
+      { code: 'clinical_records', icon: '📑', labelKey: 'NAV_CLINICAL_PEP' },
     ],
   },
   {
@@ -78,9 +78,9 @@ const SIDEBAR_SECTIONS: MenuSectionSpec[] = [
     icon: '💰',
     context: ApplicationContext.BUSINESS,
     items: [
-      { code: 'op_billing', icon: '📑', labelKey: 'NAV_FINANCIAL_BILLING' },
-      { code: 'op_cashflow', icon: '💰', labelKey: 'NAV_FINANCIAL_CASHFLOW' },
-      { code: 'op_payables', icon: '🧾', labelKey: 'NAV_FINANCIAL_PAYABLES' },
+      { code: 'financial_billing', icon: '📑', labelKey: 'NAV_FINANCIAL_BILLING' },
+      { code: 'financial_cashflow', icon: '💰', labelKey: 'NAV_FINANCIAL_CASHFLOW' },
+      { code: 'financial_payables', icon: '🧾', labelKey: 'NAV_FINANCIAL_PAYABLES' },
     ],
   },
   {
@@ -89,9 +89,11 @@ const SIDEBAR_SECTIONS: MenuSectionSpec[] = [
     icon: '🏢',
     context: ApplicationContext.BUSINESS,
     items: [
-      { code: 'base_staff', icon: '🩺', labelKey: 'NAV_BASE_STAFF' },
-      { code: 'base_health_plans', icon: '🏢', labelKey: 'NAV_BASE_HEALTH_PLANS' },
-      { code: 'base_procedures', icon: '💉', labelKey: 'NAV_BASE_PROCEDURES' },
+      { code: 'registries_organizations', icon: '🏥', labelKey: 'NAV_BASE_ORGANIZATIONS' },
+      { code: 'registries_practitioners', icon: '🩺', labelKey: 'NAV_BASE_PRACTITIONERS' },
+      { code: 'registries_staff', icon: '👥', labelKey: 'NAV_BASE_STAFF' },
+      { code: 'registries_health_plans', icon: '🏢', labelKey: 'NAV_BASE_HEALTH_PLANS' },
+      { code: 'registries_procedures', icon: '💉', labelKey: 'NAV_BASE_PROCEDURES' },
     ],
   },
   {
@@ -100,8 +102,8 @@ const SIDEBAR_SECTIONS: MenuSectionSpec[] = [
     icon: '📊',
     context: ApplicationContext.BUSINESS,
     items: [
-      { code: 'menu_mgmt_indicators', icon: '📈', labelKey: 'NAV_MGMT_INDICATORS' },
-      { code: 'menu_mgmt_reports', icon: '📊', labelKey: 'NAV_MGMT_REPORTS' },
+      { code: 'management_metrics', icon: '📈', labelKey: 'NAV_MGMT_INDICATORS' },
+      { code: 'management_reports', icon: '📊', labelKey: 'NAV_MGMT_REPORTS' },
     ],
   },
 
@@ -112,10 +114,9 @@ const SIDEBAR_SECTIONS: MenuSectionSpec[] = [
     icon: '⚙️',
     context: ApplicationContext.ARCH,
     items: [
-      { code: 'menu_sys_settings', icon: '⚙️', labelKey: 'NAV_SYS_SETTINGS' },
-      { code: 'menu_sys_users', icon: '👥', labelKey: 'NAV_SYS_USERS' },
-      { code: 'menu_sys_institution', icon: '🏥', labelKey: 'NAV_SYS_INSTITUTION' },
-      { code: 'menu_sys_audit', icon: '🛡️', labelKey: 'NAV_SYS_AUDIT' },
+      { code: 'system_users', icon: '👥', labelKey: 'NAV_SYS_USERS' },
+      { code: 'system_settings', icon: '⚙️', labelKey: 'NAV_SYS_SETTINGS' },
+      { code: 'system_audit', icon: '🛡️', labelKey: 'NAV_SYS_AUDIT' },
     ],
   },
   {
@@ -124,11 +125,11 @@ const SIDEBAR_SECTIONS: MenuSectionSpec[] = [
     icon: '🛠️',
     context: ApplicationContext.ARCH,
     items: [
-      { code: 'menu_platform_settings', icon: '👑', labelKey: 'NAV_PLATFORM_SETTINGS' },
-      { code: 'menu_platform_tenants', icon: '🏢', labelKey: 'NAV_PLATFORM_TENANTS' },
-      { code: 'menu_platform_api_keys', icon: '🔑', labelKey: 'NAV_PLATFORM_API_KEYS' },
-      { code: 'menu_platform_webhooks', icon: '⚡', labelKey: 'NAV_PLATFORM_WEBHOOKS' },
-      { code: 'menu_platform_policies', icon: '📜', labelKey: 'NAV_PLATFORM_POLICIES' },
+      { code: 'platform_tenants', icon: '🏢', labelKey: 'NAV_PLATFORM_TENANTS' },
+      { code: 'platform_settings', icon: '👑', labelKey: 'NAV_PLATFORM_SETTINGS' },
+      { code: 'platform_api_keys', icon: '🔑', labelKey: 'NAV_PLATFORM_API_KEYS' },
+      { code: 'platform_integrations', icon: '⚡', labelKey: 'NAV_PLATFORM_WEBHOOKS' },
+      { code: 'platform_policies', icon: '📜', labelKey: 'NAV_PLATFORM_POLICIES' },
     ],
   },
 ];
@@ -173,8 +174,8 @@ export const PermissionsMatrixModal: React.FC<PermissionsMatrixModalProps> = ({
     if (resourceMinRoleMap.has(itemCode)) {
       return resourceMinRoleMap.get(itemCode)!;
     }
-    if (itemCode.startsWith('menu_platform_')) return UserRole.OWNER;
-    if (itemCode.startsWith('menu_sys_')) return UserRole.ADMIN;
+    if (itemCode.startsWith('platform_')) return UserRole.OWNER;
+    if (itemCode.startsWith('system_')) return UserRole.ADMIN;
     return UserRole.USER;
   };
 

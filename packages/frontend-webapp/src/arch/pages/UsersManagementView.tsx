@@ -22,11 +22,12 @@ import {
   type UserGroupsResponse,
 } from '../../services/api.js';
 import { useI18n, SupportedLocales, type TranslationKey } from '../../i18n/index.js';
+import { useConfig } from '../../context/ConfigContext.js';
 import { UserRole, Cpf, Name, Username, Email, PasswordPolicy, BOOTSTRAP_DEFAULTS } from '@openclinic/core/shared';
-import type { UserProfile } from '../../types/auth.js';
-import { AlertBanner, AlertBannerType } from '../../components/AlertBanner.js';
+import type { UserProfile } from '../types/auth.js';
 import { EyeIcon, EyeOffIcon } from '../../components/EyeIcons.js';
 import { FieldLabelWithTooltip, ToggleSwitch } from '../components/FormControls.js';
+import { useToast } from '../../context/ToastContext.js';
 
 const ROLE_BADGE_STYLES: Record<UserRole, { bg: string; color: string; border: string; labelKey: TranslationKey }> = {
   [UserRole.OWNER]: {
@@ -63,13 +64,13 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   onProfileUpdated,
 }) => {
   const { t } = useI18n();
+  const { allowDirectUserCreation = true } = useConfig();
   const [adminSubTab, setAdminSubTab] = useState<'users' | 'groups'>('users');
 
   // Users
   const [usersList, setUsersList] = useState<UserListItem[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
-  const [userActionMsg, setUserActionMsg] = useState<string | null>(null);
-  const [userActionError, setUserActionError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Groups
   const [groupsList, setGroupsList] = useState<GroupListItem[]>([]);
@@ -105,7 +106,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const [editTouched, setEditTouched] = useState<Record<string, boolean>>({});
 
   const [resetTargetUser, setResetTargetUser] = useState<UserListItem | null>(null);
-  const [adminNewPassword, setAdminNewPassword] = useState<string>(BOOTSTRAP_DEFAULTS.DEV_DEFAULT_PASSWORD);
+  const [adminNewPassword, setAdminNewPassword] = useState<string>(BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_PASSWORD);
   const [showAdminResetPassword, setShowAdminResetPassword] = useState(false);
   const [adminResetLoading, setAdminResetLoading] = useState(false);
   const [adminResetTouched, setAdminResetTouched] = useState(false);
@@ -165,7 +166,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     setUsersLoading(true);
     listUsers()
       .then((data) => setUsersList(data))
-      .catch((err) => setUserActionError(err instanceof Error ? err.message : t('ERROR_LIST_USERS')))
+      .catch((err) => toast.error(err instanceof Error ? err.message : t('ERROR_LIST_USERS')))
       .finally(() => setUsersLoading(false));
   };
 
@@ -173,7 +174,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     setGroupsLoading(true);
     listGroups()
       .then((data) => setGroupsList(data))
-      .catch((err) => setUserActionError(err instanceof Error ? err.message : t('ERROR_LIST_GROUPS')))
+      .catch((err) => toast.error(err instanceof Error ? err.message : t('ERROR_LIST_GROUPS')))
       .finally(() => setGroupsLoading(false));
   };
 
@@ -231,7 +232,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       case 'fullName': {
         const trimmed = val.trim();
         if (!trimmed) return t('VALIDATION_ERROR_REQUIRED');
-        if (!Name.isValid(trimmed)) return t('VALIDATION_ERROR_NAME_INVALID');
+        if (!Name.isValid(trimmed)) return t(Name.ERROR_CODE);
         return '';
       }
       case 'displayName': {
@@ -245,25 +246,25 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         const trimmed = val.trim();
         if (trimmed) {
           const cleaned = Cpf.clean(trimmed);
-          if (!Cpf.isValid(cleaned)) return t('VALIDATION_ERROR_CPF_INVALID');
+          if (!Cpf.isValid(cleaned)) return t(Cpf.ERROR_CODE);
         }
         return '';
       }
       case 'username': {
         const trimmed = val.trim();
         if (!trimmed) return t('VALIDATION_ERROR_REQUIRED');
-        if (!Username.isValid(trimmed)) return t('VALIDATION_ERROR_USERNAME_INVALID');
+        if (!Username.isValid(trimmed)) return t(Username.ERROR_CODE);
         return '';
       }
       case 'email': {
         const trimmed = val.trim();
         if (!trimmed) return t('VALIDATION_ERROR_REQUIRED');
-        if (!Email.isValid(trimmed)) return t('VALIDATION_ERROR_EMAIL_INVALID');
+        if (!Email.isValid(trimmed)) return t(Email.ERROR_CODE);
         return '';
       }
       case 'password': {
         if (!val) return t('VALIDATION_ERROR_REQUIRED');
-        if (!PasswordPolicy.isValid(val)) return t('VALIDATION_ERROR_PASSWORD_POLICY');
+        if (!PasswordPolicy.isValid(val)) return t(PasswordPolicy.ERROR_CODE);
         return '';
       }
       default:
@@ -335,7 +336,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
   const validateAdminResetPassword = (pass: string): string => {
     if (!pass) return t('VALIDATION_ERROR_REQUIRED');
-    if (!PasswordPolicy.isValid(pass)) return t('VALIDATION_ERROR_PASSWORD_POLICY');
+    if (!PasswordPolicy.isValid(pass)) return t(PasswordPolicy.ERROR_CODE);
     return '';
   };
 
@@ -424,8 +425,6 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
   const handleCreateUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUserActionError(null);
-    setUserActionMsg(null);
 
     setCreateTouched({
       fullName: true,
@@ -465,7 +464,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         role: newUserRole,
         is_active: newUserActive,
       });
-      setUserActionMsg(res.message);
+      toast.success(t('USERS_MSG_CREATE_SUCCESS'));
       setShowCreateModal(false);
       setNewUserName('');
       setNewUserDisplayName('');
@@ -479,7 +478,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       setCreateTouched({});
       loadUsersList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_CREATE_USER'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_CREATE_USER'));
     } finally {
       setCreateLoading(false);
     }
@@ -504,8 +503,6 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const handleEditUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editTargetUser) return;
-    setUserActionError(null);
-    setUserActionMsg(null);
 
     setEditTouched({
       fullName: true,
@@ -542,7 +539,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         role: editUserRole,
         is_active: editUserActive,
       });
-      setUserActionMsg(res.message);
+      toast.success(t('USERS_MSG_UPDATE_SUCCESS'));
       setEditTargetUser(null);
       setEditUserCpf('');
       setEditUserDisplayName('');
@@ -553,7 +550,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         onProfileUpdated();
       }
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_UPDATE_USER'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_UPDATE_USER'));
     } finally {
       setEditLoading(false);
     }
@@ -562,8 +559,6 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const handleAdminResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetTargetUser) return;
-    setUserActionError(null);
-    setUserActionMsg(null);
     setAdminResetTouched(true);
 
     const err = validateAdminResetPassword(adminNewPassword);
@@ -574,15 +569,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
     setAdminResetLoading(true);
     try {
-      const res = await adminResetPassword(resetTargetUser.id, adminNewPassword);
-      setUserActionMsg(res.message);
+      await adminResetPassword(resetTargetUser.id, adminNewPassword);
+      toast.success(t('USERS_MSG_RESET_PASSWORD_SUCCESS'));
       setResetTargetUser(null);
-      setAdminNewPassword(BOOTSTRAP_DEFAULTS.DEV_DEFAULT_PASSWORD);
+      setAdminNewPassword(BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_PASSWORD);
       setAdminResetTouched(false);
       setAdminResetError(null);
       loadUsersList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_RESET_PASSWORD'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_RESET_PASSWORD'));
     } finally {
       setAdminResetLoading(false);
     }
@@ -591,21 +586,19 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const handleConfirmExecution = async () => {
     if (!confirmAction) return;
     setConfirmLoading(true);
-    setUserActionError(null);
-    setUserActionMsg(null);
     try {
       if (confirmAction.type === 'delete') {
-        const res = await deleteUser(confirmAction.user.id);
-        setUserActionMsg(res.message);
+        await deleteUser(confirmAction.user.id);
+        toast.success(t('USERS_MSG_DELETE_SUCCESS'));
         setEditTargetUser(null);
       } else if (confirmAction.type === 'toggle_status') {
-        const res = await toggleUserStatus(confirmAction.user.id);
-        setUserActionMsg(res.message);
+        await toggleUserStatus(confirmAction.user.id);
+        toast.success(t('USERS_MSG_STATUS_SUCCESS'));
       }
       setConfirmAction(null);
       loadUsersList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_PROCESS_REQUEST'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_PROCESS_REQUEST'));
     } finally {
       setConfirmLoading(false);
     }
@@ -614,8 +607,6 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   // Group Management Handlers
   const handleCreateGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUserActionError(null);
-    setUserActionMsg(null);
 
     setCreateGroupTouched({
       name: true,
@@ -639,7 +630,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
         description: newGroupDesc.trim(),
         is_active: newGroupActive,
       });
-      setUserActionMsg(res.message);
+      toast.success(t('GROUPS_MSG_CREATE_SUCCESS'));
       setShowCreateGroupModal(false);
       setNewGroupName('');
       setNewGroupDesc('');
@@ -648,7 +639,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       setCreateGroupTouched({});
       loadGroupsList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_CREATE_GROUP'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_CREATE_GROUP'));
     } finally {
       setCreateGroupLoading(false);
     }
@@ -667,8 +658,6 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const handleEditGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editTargetGroup) return;
-    setUserActionError(null);
-    setUserActionMsg(null);
 
     setEditGroupTouched({
       name: true,
@@ -687,18 +676,18 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
     setEditGroupLoading(true);
     try {
-      const res = await updateGroup(editTargetGroup.id, {
+      await updateGroup(editTargetGroup.id, {
         name: editGroupName.trim(),
         description: editGroupDesc.trim(),
         is_active: editGroupActive,
       });
-      setUserActionMsg(res.message);
+      toast.success(t('GROUPS_MSG_UPDATE_SUCCESS'));
       setEditTargetGroup(null);
       setEditGroupErrors({});
       setEditGroupTouched({});
       loadGroupsList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_UPDATE_GROUP'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_UPDATE_GROUP'));
     } finally {
       setEditGroupLoading(false);
     }
@@ -707,22 +696,20 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
   const handleConfirmGroupActionExecution = async () => {
     if (!confirmGroupAction) return;
     setConfirmGroupActionLoading(true);
-    setUserActionError(null);
-    setUserActionMsg(null);
     try {
       if (confirmGroupAction.type === 'delete') {
-        const res = await deleteGroup(confirmGroupAction.group.id);
-        setUserActionMsg(res.message);
+        await deleteGroup(confirmGroupAction.group.id);
+        toast.success(t('GROUPS_MSG_DELETE_SUCCESS'));
         setEditTargetGroup(null);
       } else if (confirmGroupAction.type === 'toggle_status') {
         const targetActive = confirmGroupAction.targetActiveState ?? !confirmGroupAction.group.is_active;
-        const res = await updateGroup(confirmGroupAction.group.id, { is_active: targetActive });
-        setUserActionMsg(res.message);
+        await updateGroup(confirmGroupAction.group.id, { is_active: targetActive });
+        toast.success(t('GROUPS_MSG_STATUS_SUCCESS'));
       }
       setConfirmGroupAction(null);
       loadGroupsList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_PROCESS_REQUEST'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_PROCESS_REQUEST'));
     } finally {
       setConfirmGroupActionLoading(false);
     }
@@ -736,7 +723,7 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
       const data = await getGroupMembers(g.id);
       setGroupMembersData(data);
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_LOAD_GROUP_MEMBERS'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_LOAD_GROUP_MEMBERS'));
     } finally {
       setGroupMembersLoading(false);
     }
@@ -747,12 +734,13 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     setGroupMemberActionLoading(true);
     try {
       await addGroupMember(manageMembersGroup.id, selectedAddUserId);
+      toast.success(t('GROUPS_MSG_MEMBER_ADD_SUCCESS'));
       const data = await getGroupMembers(manageMembersGroup.id);
       setGroupMembersData(data);
       setSelectedAddUserId('');
       loadGroupsList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_ADD_GROUP_MEMBER'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_ADD_GROUP_MEMBER'));
     } finally {
       setGroupMemberActionLoading(false);
     }
@@ -763,11 +751,12 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     setGroupMemberActionLoading(true);
     try {
       await removeGroupMember(manageMembersGroup.id, userId);
+      toast.success(t('GROUPS_MSG_MEMBER_REMOVE_SUCCESS'));
       const data = await getGroupMembers(manageMembersGroup.id);
       setGroupMembersData(data);
       loadGroupsList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_REMOVE_GROUP_MEMBER'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_REMOVE_GROUP_MEMBER'));
     } finally {
       setGroupMemberActionLoading(false);
     }
@@ -775,14 +764,13 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
   const openManageUserGroups = async (u: UserListItem) => {
     setManageGroupsUser(u);
-    setUserActionError(null);
     setUserGroupsLoading(true);
     setSelectedAddGroupId('');
     try {
       const data = await getUserGroups(u.id);
       setUserGroupsData(data);
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_LOAD_USER_GROUPS'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_LOAD_USER_GROUPS'));
     } finally {
       setUserGroupsLoading(false);
     }
@@ -790,16 +778,16 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
   const handleAddUserToGroup = async () => {
     if (!manageGroupsUser || !selectedAddGroupId) return;
-    setUserActionError(null);
     setUserGroupActionLoading(true);
     try {
       await addUserToGroup(manageGroupsUser.id, selectedAddGroupId);
+      toast.success(t('GROUPS_MSG_MEMBER_ADD_SUCCESS'));
       const data = await getUserGroups(manageGroupsUser.id);
       setUserGroupsData(data);
       setSelectedAddGroupId('');
       loadGroupsList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_ADD_USER_GROUP'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_ADD_USER_GROUP'));
     } finally {
       setUserGroupActionLoading(false);
     }
@@ -807,15 +795,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
   const handleRemoveUserFromGroup = async (groupId: string) => {
     if (!manageGroupsUser) return;
-    setUserActionError(null);
     setUserGroupActionLoading(true);
     try {
       await removeUserFromGroup(manageGroupsUser.id, groupId);
+      toast.success(t('GROUPS_MSG_MEMBER_REMOVE_SUCCESS'));
       const data = await getUserGroups(manageGroupsUser.id);
       setUserGroupsData(data);
       loadGroupsList();
     } catch (err) {
-      setUserActionError(err instanceof Error ? err.message : t('ERROR_REMOVE_USER_GROUP'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_REMOVE_USER_GROUP'));
     } finally {
       setUserGroupActionLoading(false);
     }
@@ -831,10 +819,12 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
     outline: 'none',
   };
 
-  const getInputStyle = (hasError?: boolean): React.CSSProperties => ({
+  const getInputStyle = (hasError?: boolean, isDisabled?: boolean): React.CSSProperties => ({
     ...inputStyle,
     borderColor: hasError ? '#ef4444' : '#cbd5e1',
-    backgroundColor: hasError ? '#fef2f2' : '#ffffff',
+    backgroundColor: isDisabled ? '#f8fafc' : hasError ? '#fef2f2' : '#ffffff',
+    color: isDisabled ? '#64748b' : '#0f172a',
+    cursor: isDisabled ? 'not-allowed' : 'text',
   });
 
   const renderFieldError = (error?: string) => {
@@ -859,21 +849,6 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {userActionError && (
-        <AlertBanner
-          type={AlertBannerType.ERROR}
-          message={userActionError}
-          onClose={() => setUserActionError(null)}
-        />
-      )}
-
-      {userActionMsg && (
-        <AlertBanner
-          type={AlertBannerType.SUCCESS}
-          message={userActionMsg}
-          onClose={() => setUserActionMsg(null)}
-        />
-      )}
 
       {/* Header com Seletor de Sub-Abas */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '16px 20px', borderRadius: 12, border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: 12 }}>
@@ -926,23 +901,45 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
 
         <div>
           {adminSubTab === 'users' ? (
-            <button
-              onClick={() => { setShowCreateModal(true); setResetTargetUser(null); setEditTargetUser(null); }}
-              style={{
-                ...btnStyle,
-                background: '#16a34a',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                height: 38,
-                padding: '0 18px',
-                fontSize: '0.85rem',
-                boxSizing: 'border-box',
-              }}
-            >
-              ➕ {t('BTN_NEW_USER')}
-            </button>
+            allowDirectUserCreation ? (
+              <button
+                type="button"
+                onClick={() => { setShowCreateModal(true); setResetTargetUser(null); setEditTargetUser(null); }}
+                style={{
+                  ...btnStyle,
+                  background: '#16a34a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  height: 38,
+                  padding: '0 18px',
+                  fontSize: '0.85rem',
+                  boxSizing: 'border-box',
+                }}
+              >
+                ➕ {t('BTN_NEW_USER')}
+              </button>
+            ) : (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#64748b',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  userSelect: 'none',
+                }}
+                title={t('USERS_DIRECT_CREATION_DISABLED_NOTICE')}
+              >
+                🔒 {t('USERS_DIRECT_CREATION_DISABLED_BADGE')}
+              </span>
+            )
           ) : (
             <button
               onClick={() => { setShowCreateGroupModal(true); setEditTargetGroup(null); }}
@@ -990,14 +987,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                     onChange={(e) => {
                       const val = e.target.value;
                       setNewUserName(val);
-                      if (createTouched.fullName || createErrors.fullName) {
+                      if (createErrors.fullName) {
                         const err = validateUserField('fullName', val);
-                        setCreateErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.fullName = err;
-                          else delete next.fullName;
-                          return next;
-                        });
+                        if (!err) {
+                          setCreateErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.fullName;
+                            return next;
+                          });
+                        }
                       }
                     }}
                     style={getInputStyle(!!createErrors.fullName)}
@@ -1013,14 +1011,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                     onChange={(e) => {
                       const val = e.target.value;
                       setNewUserDisplayName(val);
-                      if (createTouched.displayName || createErrors.displayName) {
+                      if (createErrors.displayName) {
                         const err = validateUserField('displayName', val);
-                        setCreateErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.displayName = err;
-                          else delete next.displayName;
-                          return next;
-                        });
+                        if (!err) {
+                          setCreateErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.displayName;
+                            return next;
+                          });
+                        }
                       }
                     }}
                     style={getInputStyle(!!createErrors.displayName)}
@@ -1047,19 +1046,20 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                     onChange={(e) => {
                       const formatted = Cpf.format(e.target.value);
                       setNewUserCpf(formatted);
-                      if (createTouched.cpf || createErrors.cpf) {
+                      if (createErrors.cpf) {
                         const err = validateUserField('cpf', formatted);
-                        setCreateErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.cpf = err;
-                          else delete next.cpf;
-                          return next;
-                        });
+                        if (!err) {
+                          setCreateErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.cpf;
+                            return next;
+                          });
+                        }
                       }
                     }}
                     placeholder={t('FIELD_CPF_PLACEHOLDER')}
                     maxLength={14}
-                    style={{ ...getInputStyle(!!createErrors.cpf), padding: '10px 10px' }}
+                    style={{ ...getInputStyle(!!createErrors.cpf), padding: '10px 10px', fontFamily: 'monospace' }}
                   />
                   {renderFieldError(createErrors.cpf)}
                 </div>
@@ -1072,14 +1072,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                     onChange={(e) => {
                       const val = e.target.value;
                       setNewUserUsername(val);
-                      if (createTouched.username || createErrors.username) {
+                      if (createErrors.username) {
                         const err = validateUserField('username', val);
-                        setCreateErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.username = err;
-                          else delete next.username;
-                          return next;
-                        });
+                        if (!err) {
+                          setCreateErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.username;
+                            return next;
+                          });
+                        }
                       }
                     }}
                     style={getInputStyle(!!createErrors.username)}
@@ -1095,14 +1096,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                     onChange={(e) => {
                       const val = e.target.value;
                       setNewUserEmail(val);
-                      if (createTouched.email || createErrors.email) {
+                      if (createErrors.email) {
                         const err = validateUserField('email', val);
-                        setCreateErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.email = err;
-                          else delete next.email;
-                          return next;
-                        });
+                        if (!err) {
+                          setCreateErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.email;
+                            return next;
+                          });
+                        }
                       }
                     }}
                     style={getInputStyle(!!createErrors.email)}
@@ -1134,14 +1136,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                       onChange={(e) => {
                         const val = e.target.value;
                         setNewUserPassword(val);
-                        if (createTouched.password || createErrors.password) {
+                        if (createErrors.password) {
                           const err = validateUserField('password', val);
-                          setCreateErrors((prev) => {
-                            const next = { ...prev };
-                            if (err) next.password = err;
-                            else delete next.password;
-                            return next;
-                          });
+                          if (!err) {
+                            setCreateErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.password;
+                              return next;
+                            });
+                          }
                         }
                       }}
                       style={{ ...getInputStyle(!!createErrors.password), paddingRight: 116 }}
@@ -1210,34 +1213,57 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                   <ToggleSwitch
                     checked={editUserActive}
                     onChange={(val) => setEditUserActive(val)}
-                    disabled={currentUser?.id === editTargetUser.id}
+                    disabled={!allowDirectUserCreation || currentUser?.id === editTargetUser.id}
                   />
                   <button onClick={() => { setEditTargetUser(null); setEditErrors({}); setEditTouched({}); }} style={{ background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer', color: '#64748b' }}>✖</button>
                 </div>
               </div>
 
               <form onSubmit={handleEditUserSubmit} noValidate style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 14 }}>
+                {!allowDirectUserCreation && (
+                  <div
+                    style={{
+                      gridColumn: '1 / -1',
+                      padding: '10px 14px',
+                      background: '#f0f9ff',
+                      border: '1px solid #bae6fd',
+                      borderRadius: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      fontSize: '0.80rem',
+                      color: '#0369a1',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>ℹ️</span>
+                    <span>{t('USERS_EDIT_READONLY_NOTICE')}</span>
+                  </div>
+                )}
+
                 {/* Row 1: Full Name, Display Name, Job Title */}
                 <div style={{ gridColumn: 'span 4' }}>
                   <FieldLabelWithTooltip label={t('FIELD_FULL_NAME_LABEL')} required />
                   <input
                     type="text"
+                    disabled={!allowDirectUserCreation}
                     value={editUserName}
                     onBlur={() => handleEditBlur('fullName')}
                     onChange={(e) => {
                       const val = e.target.value;
                       setEditUserName(val);
-                      if (editTouched.fullName || editErrors.fullName) {
+                      if (editErrors.fullName) {
                         const err = validateUserField('fullName', val);
-                        setEditErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.fullName = err;
-                          else delete next.fullName;
-                          return next;
-                        });
+                        if (!err) {
+                          setEditErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.fullName;
+                            return next;
+                          });
+                        }
                       }
                     }}
-                    style={getInputStyle(!!editErrors.fullName)}
+                    style={getInputStyle(!!editErrors.fullName, !allowDirectUserCreation)}
                   />
                   {renderFieldError(editErrors.fullName)}
                 </div>
@@ -1245,22 +1271,24 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_DISPLAY_NAME_LABEL')} />
                   <input
                     type="text"
+                    disabled={!allowDirectUserCreation}
                     value={editUserDisplayName}
                     onBlur={() => handleEditBlur('displayName')}
                     onChange={(e) => {
                       const val = e.target.value;
                       setEditUserDisplayName(val);
-                      if (editTouched.displayName || editErrors.displayName) {
+                      if (editErrors.displayName) {
                         const err = validateUserField('displayName', val);
-                        setEditErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.displayName = err;
-                          else delete next.displayName;
-                          return next;
-                        });
+                        if (!err) {
+                          setEditErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.displayName;
+                            return next;
+                          });
+                        }
                       }
                     }}
-                    style={getInputStyle(!!editErrors.displayName)}
+                    style={getInputStyle(!!editErrors.displayName, !allowDirectUserCreation)}
                   />
                   {renderFieldError(editErrors.displayName)}
                 </div>
@@ -1268,9 +1296,10 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_JOB_TITLE_LABEL')} />
                   <input
                     type="text"
+                    disabled={!allowDirectUserCreation}
                     value={editUserJobTitle}
                     onChange={(e) => setEditUserJobTitle(e.target.value)}
-                    style={inputStyle}
+                    style={getInputStyle(false, !allowDirectUserCreation)}
                   />
                 </div>
 
@@ -1279,24 +1308,26 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_CPF_LABEL')} />
                   <input
                     type="text"
+                    disabled={!allowDirectUserCreation}
                     value={editUserCpf}
                     onBlur={() => handleEditBlur('cpf')}
                     onChange={(e) => {
                       const formatted = Cpf.format(e.target.value);
                       setEditUserCpf(formatted);
-                      if (editTouched.cpf || editErrors.cpf) {
+                      if (editErrors.cpf) {
                         const err = validateUserField('cpf', formatted);
-                        setEditErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.cpf = err;
-                          else delete next.cpf;
-                          return next;
-                        });
+                        if (!err) {
+                          setEditErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.cpf;
+                            return next;
+                          });
+                        }
                       }
                     }}
                     placeholder={t('FIELD_CPF_PLACEHOLDER')}
                     maxLength={14}
-                    style={{ ...getInputStyle(!!editErrors.cpf), padding: '10px 10px' }}
+                    style={{ ...getInputStyle(!!editErrors.cpf, !allowDirectUserCreation), padding: '10px 10px', fontFamily: 'monospace' }}
                   />
                   {renderFieldError(editErrors.cpf)}
                 </div>
@@ -1304,22 +1335,24 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_USERNAME_LABEL')} required />
                   <input
                     type="text"
+                    disabled={!allowDirectUserCreation}
                     value={editUserUsername}
                     onBlur={() => handleEditBlur('username')}
                     onChange={(e) => {
                       const val = e.target.value;
                       setEditUserUsername(val);
-                      if (editTouched.username || editErrors.username) {
+                      if (editErrors.username) {
                         const err = validateUserField('username', val);
-                        setEditErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.username = err;
-                          else delete next.username;
-                          return next;
-                        });
+                        if (!err) {
+                          setEditErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.username;
+                            return next;
+                          });
+                        }
                       }
                     }}
-                    style={getInputStyle(!!editErrors.username)}
+                    style={getInputStyle(!!editErrors.username, !allowDirectUserCreation)}
                   />
                   {renderFieldError(editErrors.username)}
                 </div>
@@ -1327,22 +1360,25 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_EMAIL_LABEL')} required />
                   <input
                     type="email"
+                    disabled={!allowDirectUserCreation}
                     value={editUserEmail}
+                    placeholder="usuario@openclinic.local"
                     onBlur={() => handleEditBlur('email')}
                     onChange={(e) => {
                       const val = e.target.value;
                       setEditUserEmail(val);
-                      if (editTouched.email || editErrors.email) {
+                      if (editErrors.email) {
                         const err = validateUserField('email', val);
-                        setEditErrors((prev) => {
-                          const next = { ...prev };
-                          if (err) next.email = err;
-                          else delete next.email;
-                          return next;
-                        });
+                        if (!err) {
+                          setEditErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.email;
+                            return next;
+                          });
+                        }
                       }
                     }}
-                    style={getInputStyle(!!editErrors.email)}
+                    style={getInputStyle(!!editErrors.email, !allowDirectUserCreation)}
                   />
                   {renderFieldError(editErrors.email)}
                 </div>
@@ -1350,9 +1386,15 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_ROLE_LABEL')} tooltip={t('FIELD_ROLE_TOOLTIP')} required />
                   <select
                     id="edit-user-role"
+                    disabled={!allowDirectUserCreation}
                     value={editUserRole}
                     onChange={(e) => setEditUserRole(e.target.value as UserRole)}
-                    style={inputStyle}
+                    style={{
+                      ...inputStyle,
+                      backgroundColor: !allowDirectUserCreation ? '#f8fafc' : '#ffffff',
+                      color: !allowDirectUserCreation ? '#64748b' : '#0f172a',
+                      cursor: !allowDirectUserCreation ? 'not-allowed' : 'default',
+                    }}
                   >
                     <option value={UserRole.USER}>{t('ROLE_OPTION_USER')} ({UserRole.USER})</option>
                     <option value={UserRole.ADMIN}>{t('ROLE_OPTION_ADMIN')} ({UserRole.ADMIN})</option>
@@ -1361,35 +1403,39 @@ export const UsersManagementView: React.FC<UsersManagementViewProps> = ({
                 </div>
 
                 <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-                  <button
-                    type="button"
-                    disabled={currentUser?.id === editTargetUser.id || editTargetUser.is_active}
-                    onClick={() => setConfirmAction({ type: 'delete', user: editTargetUser })}
-                    title={
-                      currentUser?.id === editTargetUser.id
-                        ? t('TOOLTIP_CANNOT_DELETE_SELF')
-                        : editTargetUser.is_active
-                        ? t('TOOLTIP_DEACTIVATE_BEFORE_DELETE')
-                        : t('TOOLTIP_DELETE_PERMANENT')
-                    }
-                    style={{
-                      ...btnStyle,
-                      border: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? '1px solid #e2e8f0' : '1px solid #fca5a5',
-                      background: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? '#f1f5f9' : '#fee2e2',
-                      color: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? '#94a3b8' : '#dc2626',
-                      opacity: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? 0.6 : 1,
-                      cursor: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    🗑️ {t('BTN_DELETE_USER')}
-                  </button>
+                  {allowDirectUserCreation ? (
+                    <button
+                      type="button"
+                      disabled={currentUser?.id === editTargetUser.id || editTargetUser.is_active}
+                      onClick={() => setConfirmAction({ type: 'delete', user: editTargetUser })}
+                      title={
+                        currentUser?.id === editTargetUser.id
+                          ? t('TOOLTIP_CANNOT_DELETE_SELF')
+                          : editTargetUser.is_active
+                          ? t('TOOLTIP_DEACTIVATE_BEFORE_DELETE')
+                          : t('TOOLTIP_DELETE_PERMANENT')
+                      }
+                      style={{
+                        ...btnStyle,
+                        border: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? '1px solid #e2e8f0' : '1px solid #fca5a5',
+                        background: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? '#f1f5f9' : '#fee2e2',
+                        color: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? '#94a3b8' : '#dc2626',
+                        opacity: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? 0.6 : 1,
+                        cursor: currentUser?.id === editTargetUser.id || editTargetUser.is_active ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      🗑️ {t('BTN_DELETE_USER')}
+                    </button>
+                  ) : <div />}
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button type="button" onClick={() => { setEditTargetUser(null); setEditErrors({}); setEditTouched({}); }} style={{ ...btnStyle, background: '#e2e8f0', color: '#334155' }}>
                       {t('BTN_CANCEL')}
                     </button>
-                    <button type="submit" disabled={editLoading} style={{ ...btnStyle, background: '#2563eb', opacity: editLoading ? 0.7 : 1 }}>
-                      {editLoading ? t('BTN_PROCESSING') : t('BTN_SAVE')}
-                    </button>
+                    {allowDirectUserCreation && (
+                      <button type="submit" disabled={editLoading} style={{ ...btnStyle, background: '#2563eb', opacity: editLoading ? 0.7 : 1 }}>
+                        {editLoading ? t('BTN_PROCESSING') : t('BTN_SAVE')}
+                      </button>
+                    )}
                   </div>
                 </div>
               </form>

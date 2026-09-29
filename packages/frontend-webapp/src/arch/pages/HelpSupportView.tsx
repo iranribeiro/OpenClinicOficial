@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useI18n, type TranslationKey } from '../../i18n/index.js';
+import { OrganizationHelpModal } from '../../business/registries/organizations/OrganizationHelpModal.js';
 
 export const HelpSupportView: React.FC = () => {
   const { t } = useI18n();
+  const [isEasGuideOpen, setIsEasGuideOpen] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
   const [supportCategory, setSupportCategory] = useState<TranslationKey>('HELP_CAT_QUESTION');
   const [supportMessage, setSupportMessage] = useState('');
@@ -64,6 +66,31 @@ export const HelpSupportView: React.FC = () => {
             <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: 4 }}>🛡️ {t('HELP_CARD_CRYPTO_TITLE')}</div>
             <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{t('HELP_CARD_CRYPTO_DESC')}</div>
           </div>
+          <div style={{ background: '#f0f9ff', padding: 14, borderRadius: 8, border: '1px solid #bae6fd', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0369a1', marginBottom: 4 }}>🏢 Arquitetura Clínica: Organizações & EAS</div>
+              <div style={{ fontSize: '0.78rem', color: '#0c4a6e', marginBottom: 8 }}>
+                Distinção jurídica e sanitária entre Pessoa Jurídica Mantenedora, Estabelecimentos de Saúde (CNES) e Salas Assistenciais.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsEasGuideOpen(true)}
+              style={{
+                alignSelf: 'flex-start',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 12px',
+                fontSize: '0.76rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              📖 Abrir Guia Regulatório
+            </button>
+          </div>
         </div>
       </div>
 
@@ -95,6 +122,11 @@ export const HelpSupportView: React.FC = () => {
           <button type="submit" style={btnStyle}>📨 {t('BTN_SEND_TICKET')}</button>
         </form>
       </div>
+
+      <OrganizationHelpModal
+        isOpen={isEasGuideOpen}
+        onClose={() => setIsEasGuideOpen(false)}
+      />
     </div>
   );
 };

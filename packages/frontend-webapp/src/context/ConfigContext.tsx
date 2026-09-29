@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { getPublicConfig, applyDocumentBranding, type PublicConfig } from '../services/api.js';
-import { DEFAULT_PUBLIC_CONFIG_FALLBACKS } from '../config/config.constants.js';
-import { LoginIdentifierType } from '@openclinic/core/shared';
+import { LoginIdentifierType, DEFAULT_PLATFORM_MANIFEST } from '@openclinic/core/shared';
 
 export interface ConfigContextValue {
   config: PublicConfig | null;
   isLoading: boolean;
+  productName: string;
   appName: string;
   appSubtitle: string;
   appDescription: string;
@@ -16,6 +16,7 @@ export interface ConfigContextValue {
   defaultLocale: string;
   supportedLocales: string[];
   primaryLoginIdentifier: LoginIdentifierType;
+  allowDirectUserCreation: boolean;
   refreshConfig: () => Promise<void>;
 }
 
@@ -32,19 +33,19 @@ export function ConfigProvider({ children }: { children: ReactNode }): React.Rea
       const sub = data.appSubtitle;
       const effectiveTitle = data.appName && sub
         ? `${data.appName} - ${sub}`
-        : (data.appName || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_NAME);
+        : (data.appName || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_NAME);
       applyDocumentBranding(
         effectiveTitle,
-        data.appFaviconUrl || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_FAVICON_URL,
-        data.defaultLocale || DEFAULT_PUBLIC_CONFIG_FALLBACKS.DEFAULT_LOCALE
+        data.appFaviconUrl || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_FAVICON_URL,
+        data.defaultLocale || DEFAULT_PLATFORM_MANIFEST.DEFAULT_LOCALE
       );
     } catch (err) {
       console.warn('[ConfigProvider] Failed to load public config from backend, using safe fallbacks:', err);
-      const fallbackTitle = `${DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_NAME} - ${DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_SUBTITLE}`;
+      const fallbackTitle = `${DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_NAME} - ${DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_SUBTITLE}`;
       applyDocumentBranding(
         fallbackTitle,
-        DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_FAVICON_URL,
-        DEFAULT_PUBLIC_CONFIG_FALLBACKS.DEFAULT_LOCALE
+        DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_FAVICON_URL,
+        DEFAULT_PLATFORM_MANIFEST.DEFAULT_LOCALE
       );
     } finally {
       setIsLoading(false);
@@ -56,20 +57,23 @@ export function ConfigProvider({ children }: { children: ReactNode }): React.Rea
   }, [refreshConfig]);
 
   const value = useMemo<ConfigContextValue>(() => {
-    const appName = config?.appName || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_NAME;
-    const appSubtitle = config?.appSubtitle || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_SUBTITLE;
-    const appDescription = config?.appDescription || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_DESCRIPTION;
-    const appVersion = config?.appVersion || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_VERSION;
-    const appLogoUrl = config?.appLogoUrl || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_LOGO_URL;
-    const appFaviconUrl = config?.appFaviconUrl || DEFAULT_PUBLIC_CONFIG_FALLBACKS.APP_FAVICON_URL;
-    const tenantName = config?.tenantName || DEFAULT_PUBLIC_CONFIG_FALLBACKS.TENANT_NAME;
-    const defaultLocale = config?.defaultLocale || DEFAULT_PUBLIC_CONFIG_FALLBACKS.DEFAULT_LOCALE;
-    const supportedLocales = config?.supportedLocales || (DEFAULT_PUBLIC_CONFIG_FALLBACKS.SUPPORTED_LOCALES as unknown as string[]);
+    const productName = config?.productName || DEFAULT_PLATFORM_MANIFEST.PRODUCT_NAME;
+    const appName = config?.appName || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_NAME;
+    const appSubtitle = config?.appSubtitle || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_SUBTITLE;
+    const appDescription = config?.appDescription || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_DESCRIPTION;
+    const appVersion = config?.appVersion || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_VERSION;
+    const appLogoUrl = config?.appLogoUrl || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_LOGO_URL;
+    const appFaviconUrl = config?.appFaviconUrl || DEFAULT_PLATFORM_MANIFEST.DEFAULT_APP_FAVICON_URL;
+    const tenantName = config?.tenantName || DEFAULT_PLATFORM_MANIFEST.DEFAULT_TENANT_NAME;
+    const defaultLocale = config?.defaultLocale || DEFAULT_PLATFORM_MANIFEST.DEFAULT_LOCALE;
+    const supportedLocales = config?.supportedLocales || (DEFAULT_PLATFORM_MANIFEST.SUPPORTED_LOCALES as unknown as string[]);
     const primaryLoginIdentifier = config?.primaryLoginIdentifier || LoginIdentifierType.CPF;
+    const allowDirectUserCreation = config?.allowDirectUserCreation ?? DEFAULT_PLATFORM_MANIFEST.ALLOW_DIRECT_USER_CREATION;
 
     return {
       config,
       isLoading,
+      productName,
       appName,
       appSubtitle,
       appDescription,
@@ -80,6 +84,7 @@ export function ConfigProvider({ children }: { children: ReactNode }): React.Rea
       defaultLocale,
       supportedLocales,
       primaryLoginIdentifier,
+      allowDirectUserCreation,
       refreshConfig,
     };
   }, [config, isLoading, refreshConfig]);

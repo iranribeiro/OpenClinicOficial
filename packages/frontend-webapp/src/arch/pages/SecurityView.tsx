@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { changePassword } from '../../services/api.js';
 import { useI18n } from '../../i18n/index.js';
 import { EyeIcon, EyeOffIcon } from '../../components/EyeIcons.js';
-import { AlertBanner, AlertBannerType } from '../../components/AlertBanner.js';
+import { useToast } from '../../context/ToastContext.js';
 
 export const SecurityView: React.FC = () => {
   const { t } = useI18n();
@@ -11,26 +11,23 @@ export const SecurityView: React.FC = () => {
   const [confirmPass, setConfirmPass] = useState('');
   const [passLoading, setPassLoading] = useState(false);
   const [showMyPass, setShowMyPass] = useState(false);
-  const [passSuccess, setPassSuccess] = useState<string | null>(null);
-  const [passError, setPassError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleChangeMyPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPass !== confirmPass) {
-      setPassError(t('ERROR_PASSWORD_MISMATCH'));
+      toast.error(t('ERROR_PASSWORD_MISMATCH'));
       return;
     }
     setPassLoading(true);
-    setPassError(null);
-    setPassSuccess(null);
     try {
-      const res = await changePassword(currPass, newPass);
-      setPassSuccess(res.message || t('SUCCESS_PASSWORD_CHANGED'));
+      await changePassword(currPass, newPass);
+      toast.success(t('SUCCESS_PASSWORD_CHANGED'));
       setCurrPass('');
       setNewPass('');
       setConfirmPass('');
     } catch (err) {
-      setPassError(err instanceof Error ? err.message : t('ERROR_CHANGE_PASSWORD'));
+      toast.error(err instanceof Error ? err.message : t('ERROR_CHANGE_PASSWORD'));
     } finally {
       setPassLoading(false);
     }
@@ -63,22 +60,6 @@ export const SecurityView: React.FC = () => {
       <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0 0 18px' }}>
         {t('MY_PASSWORD_SUBTITLE')}
       </p>
-
-      {passError && (
-        <AlertBanner
-          type={AlertBannerType.ERROR}
-          message={passError}
-          onClose={() => setPassError(null)}
-        />
-      )}
-
-      {passSuccess && (
-        <AlertBanner
-          type={AlertBannerType.SUCCESS}
-          message={passSuccess}
-          onClose={() => setPassSuccess(null)}
-        />
-      )}
 
       <form onSubmit={handleChangeMyPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
