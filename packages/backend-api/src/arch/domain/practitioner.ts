@@ -10,6 +10,22 @@ export interface PractitionerInput {
   cpf?: string | null;
   email?: string | null;
   phone?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  social_name?: string | null;
+  cns?: string | null;
+  photo_url?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  is_technical_lead?: boolean;
+  digital_signature_type?: string;
+  calendar_color?: string | null;
+  notes?: string | null;
 }
 
 export interface Practitioner extends PractitionerInput {

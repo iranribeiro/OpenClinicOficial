@@ -25,6 +25,8 @@ import { registerTenantRoutes } from './arch/presentation/tenant.router.js';
 import { errorHandler } from './arch/presentation/error-handler.js';
 import { registerPractitionerRoutes } from './arch/presentation/practitioner.router.js';
 import { registerPatientRoutes } from './arch/presentation/patient.router.js';
+import { registerOrganizationRoutes } from './business/presentation/organization.router.js';
+import { registerStaffRoutes } from './business/presentation/staff.router.js';
 import { createAuthenticateJwt } from './arch/presentation/middlewares/authenticate-jwt.js';
 import { requirePermission } from './arch/presentation/middlewares/require-permission.js';
 
@@ -291,6 +293,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       appointments: (request) => uow.appointmentsForTenant(request.user!.tenant_id!),
     });
   });
+
+  registerOrganizationRoutes(app, uow, jwtConfig);
+  registerStaffRoutes(app, uow, jwtConfig);
 
   return app;
 }

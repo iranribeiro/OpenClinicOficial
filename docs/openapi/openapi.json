@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenClinic — Electronic Health Record (EHR) & Governance API",
     "description": "Open, modular, and auditable Electronic Health Record (EHR) and Clinical Management API with hybrid access control (RBAC + ACL), multi-tenancy, dynamic capabilities resolution, and enterprise security (Argon2id + in-memory JWT).",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "contact": {
       "name": "Iniciativa OpenClinic",
       "url": "https://github.com/Iniciativa-OpenClinic/OpenClinic"
@@ -5818,68 +5818,68 @@
                   },
                   "cnpj": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 18
+                    "maxLength": 18,
+                    "nullable": true
                   },
                   "contactName": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "contactTitle": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "contactEmail": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "contactPhone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "postalCode": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "street": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "complement": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "neighborhood": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "city": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "state": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "country": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "nullable": true
                   },
                   "isDefault": {
                     "type": "boolean",
@@ -6277,68 +6277,68 @@
                   },
                   "cnpj": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 18
+                    "maxLength": 18,
+                    "nullable": true
                   },
                   "contactName": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "contactTitle": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "contactEmail": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "contactPhone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "postalCode": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "street": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "complement": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "neighborhood": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "city": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "state": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "country": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "nullable": true
                   },
                   "isDefault": {
                     "type": "boolean"
@@ -6696,8 +6696,8 @@
                           },
                           "birth_date": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date"
+                            "format": "date",
+                            "nullable": true
                           },
                           "gender": {
                             "type": "string",
@@ -6744,8 +6744,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -7039,34 +7039,34 @@
                   },
                   "cpf": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 11
+                    "maxLength": 11,
+                    "nullable": true
                   },
                   "cns": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 15
+                    "maxLength": 15,
+                    "nullable": true
                   },
                   "birth_date": {
                     "type": "string",
-                    "nullable": true,
-                    "format": "date"
+                    "format": "date",
+                    "nullable": true
                   },
                   "gender": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "email": {
                     "type": "string",
-                    "nullable": true,
                     "format": "email",
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "phone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "address": {
                     "type": "string",
@@ -7074,18 +7074,18 @@
                   },
                   "emergency_contact": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "insurance_name": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "insurance_number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "allergies_notes": {
                     "type": "string",
@@ -7128,8 +7128,8 @@
                     },
                     "birth_date": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date"
+                      "format": "date",
+                      "nullable": true
                     },
                     "gender": {
                       "type": "string",
@@ -7176,8 +7176,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -7491,8 +7491,8 @@
                     },
                     "birth_date": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date"
+                      "format": "date",
+                      "nullable": true
                     },
                     "gender": {
                       "type": "string",
@@ -7539,8 +7539,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -7826,34 +7826,34 @@
                   },
                   "cpf": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 11
+                    "maxLength": 11,
+                    "nullable": true
                   },
                   "cns": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 15
+                    "maxLength": 15,
+                    "nullable": true
                   },
                   "birth_date": {
                     "type": "string",
-                    "nullable": true,
-                    "format": "date"
+                    "format": "date",
+                    "nullable": true
                   },
                   "gender": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "email": {
                     "type": "string",
-                    "nullable": true,
                     "format": "email",
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "phone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "address": {
                     "type": "string",
@@ -7861,18 +7861,18 @@
                   },
                   "emergency_contact": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "insurance_name": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "insurance_number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "allergies_notes": {
                     "type": "string",
@@ -7926,8 +7926,8 @@
                     },
                     "birth_date": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date"
+                      "format": "date",
+                      "nullable": true
                     },
                     "gender": {
                       "type": "string",
@@ -7974,8 +7974,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -8620,6 +8620,69 @@
                           "is_clinical_staff": {
                             "type": "boolean"
                           },
+                          "birth_date": {
+                            "type": "string",
+                            "format": "date",
+                            "nullable": true
+                          },
+                          "gender": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "social_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "cns": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "photo_url": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "street": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "number": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "complement": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "neighborhood": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "city": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "state": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "postal_code": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "is_technical_lead": {
+                            "type": "boolean"
+                          },
+                          "digital_signature_type": {
+                            "type": "string"
+                          },
+                          "calendar_color": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
                           "is_active": {
                             "type": "boolean"
                           },
@@ -8633,8 +8696,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -8987,8 +9050,8 @@
                   },
                   "cpf": {
                     "type": "string",
-                    "nullable": true,
-                    "pattern": "^[0-9]{11}$"
+                    "pattern": "^[0-9]{11}$",
+                    "nullable": true
                   },
                   "practitioner_type": {
                     "type": "string",
@@ -8998,22 +9061,21 @@
                   },
                   "job_title": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "council_type": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "council_number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "council_uf": {
                     "type": "string",
-                    "nullable": true,
                     "enum": [
                       null,
                       "AC",
@@ -9043,26 +9105,103 @@
                       "SP",
                       "SE",
                       "TO"
-                    ]
+                    ],
+                    "nullable": true
                   },
                   "primary_specialty": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 150
+                    "maxLength": 150,
+                    "nullable": true
                   },
                   "is_clinical_staff": {
                     "type": "boolean"
                   },
                   "email": {
                     "type": "string",
-                    "nullable": true,
                     "format": "email",
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "phone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "birth_date": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "gender": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "social_name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true
+                  },
+                  "cns": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "nullable": true
+                  },
+                  "photo_url": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true
+                  },
+                  "street": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true
+                  },
+                  "number": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "complement": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true
+                  },
+                  "neighborhood": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true
+                  },
+                  "city": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true
+                  },
+                  "state": {
+                    "type": "string",
+                    "maxLength": 2,
+                    "nullable": true
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "is_technical_lead": {
+                    "type": "boolean"
+                  },
+                  "digital_signature_type": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "calendar_color": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true
                   }
                 }
               }
@@ -9133,6 +9272,69 @@
                     "is_clinical_staff": {
                       "type": "boolean"
                     },
+                    "birth_date": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "social_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "cns": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "photo_url": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "street": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "number": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "complement": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "neighborhood": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "state": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "postal_code": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "is_technical_lead": {
+                      "type": "boolean"
+                    },
+                    "digital_signature_type": {
+                      "type": "string"
+                    },
+                    "calendar_color": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
                     "is_active": {
                       "type": "boolean"
                     },
@@ -9146,8 +9348,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -9551,6 +9753,69 @@
                     "is_clinical_staff": {
                       "type": "boolean"
                     },
+                    "birth_date": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "social_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "cns": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "photo_url": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "street": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "number": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "complement": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "neighborhood": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "state": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "postal_code": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "is_technical_lead": {
+                      "type": "boolean"
+                    },
+                    "digital_signature_type": {
+                      "type": "string"
+                    },
+                    "calendar_color": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
                     "is_active": {
                       "type": "boolean"
                     },
@@ -9564,8 +9829,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -9909,8 +10174,8 @@
                   },
                   "cpf": {
                     "type": "string",
-                    "nullable": true,
-                    "pattern": "^[0-9]{11}$"
+                    "pattern": "^[0-9]{11}$",
+                    "nullable": true
                   },
                   "practitioner_type": {
                     "type": "string",
@@ -9920,22 +10185,21 @@
                   },
                   "job_title": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "council_type": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "council_number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "council_uf": {
                     "type": "string",
-                    "nullable": true,
                     "enum": [
                       null,
                       "AC",
@@ -9965,26 +10229,103 @@
                       "SP",
                       "SE",
                       "TO"
-                    ]
+                    ],
+                    "nullable": true
                   },
                   "primary_specialty": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 150
+                    "maxLength": 150,
+                    "nullable": true
                   },
                   "is_clinical_staff": {
                     "type": "boolean"
                   },
                   "email": {
                     "type": "string",
-                    "nullable": true,
                     "format": "email",
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "phone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "birth_date": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "gender": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "social_name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true
+                  },
+                  "cns": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "nullable": true
+                  },
+                  "photo_url": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true
+                  },
+                  "street": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true
+                  },
+                  "number": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "complement": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true
+                  },
+                  "neighborhood": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true
+                  },
+                  "city": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "nullable": true
+                  },
+                  "state": {
+                    "type": "string",
+                    "maxLength": 2,
+                    "nullable": true
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "is_technical_lead": {
+                    "type": "boolean"
+                  },
+                  "digital_signature_type": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "calendar_color": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true
                   }
                 }
               }
@@ -10066,6 +10407,69 @@
                     "is_clinical_staff": {
                       "type": "boolean"
                     },
+                    "birth_date": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true
+                    },
+                    "gender": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "social_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "cns": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "photo_url": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "street": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "number": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "complement": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "neighborhood": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "state": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "postal_code": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "is_technical_lead": {
+                      "type": "boolean"
+                    },
+                    "digital_signature_type": {
+                      "type": "string"
+                    },
+                    "calendar_color": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
                     "is_active": {
                       "type": "boolean"
                     },
@@ -10079,8 +10483,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -10874,8 +11278,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -11234,75 +11638,75 @@
                   },
                   "trade_name": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "cnes_code": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 15
+                    "maxLength": 15,
+                    "nullable": true
                   },
                   "tax_id": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "nullable": true
                   },
                   "cnpj": {
                     "type": "string",
-                    "nullable": true,
                     "maxLength": 14,
-                    "pattern": "^[0-9]{14}$"
+                    "pattern": "^[0-9]{14}$",
+                    "nullable": true
                   },
                   "phone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "email": {
                     "type": "string",
-                    "nullable": true,
                     "maxLength": 255,
-                    "format": "email"
+                    "format": "email",
+                    "nullable": true
                   },
                   "postal_code": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "street": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "complement": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "neighborhood": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "city": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "state": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "country": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "nullable": true
                   },
                   "is_headquarters": {
                     "type": "boolean"
@@ -11409,8 +11813,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -11847,8 +12251,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -12198,75 +12602,75 @@
                   },
                   "trade_name": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "cnes_code": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 15
+                    "maxLength": 15,
+                    "nullable": true
                   },
                   "tax_id": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "nullable": true
                   },
                   "cnpj": {
                     "type": "string",
-                    "nullable": true,
                     "maxLength": 14,
-                    "pattern": "^[0-9]{14}$"
+                    "pattern": "^[0-9]{14}$",
+                    "nullable": true
                   },
                   "phone": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "email": {
                     "type": "string",
-                    "nullable": true,
                     "maxLength": 255,
-                    "format": "email"
+                    "format": "email",
+                    "nullable": true
                   },
                   "postal_code": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "street": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "nullable": true
                   },
                   "number": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "nullable": true
                   },
                   "complement": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "neighborhood": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "city": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "state": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "country": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "nullable": true
                   },
                   "is_headquarters": {
                     "type": "boolean"
@@ -12384,8 +12788,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -13176,8 +13580,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -13531,18 +13935,18 @@
                   },
                   "description": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "category": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "tuss_code": {
                     "type": "string",
-                    "nullable": true,
-                    "pattern": "^[0-9]{8}$"
+                    "pattern": "^[0-9]{8}$",
+                    "nullable": true
                   },
                   "estimated_duration_minutes": {
                     "type": "integer",
@@ -13554,25 +13958,25 @@
                   },
                   "preparation_instructions": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "return_after_days": {
                     "type": "integer",
-                    "nullable": true,
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 2147483647,
+                    "nullable": true
                   },
                   "minimum_interval_days": {
                     "type": "integer",
-                    "nullable": true,
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 2147483647,
+                    "nullable": true
                   },
                   "calendar_color": {
                     "type": "string",
-                    "nullable": true,
-                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "nullable": true
                   },
                   "is_active": {
                     "type": "boolean"
@@ -13668,8 +14072,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -14084,8 +14488,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -14429,18 +14833,18 @@
                   },
                   "description": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "category": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "tuss_code": {
                     "type": "string",
-                    "nullable": true,
-                    "pattern": "^[0-9]{8}$"
+                    "pattern": "^[0-9]{8}$",
+                    "nullable": true
                   },
                   "estimated_duration_minutes": {
                     "type": "integer",
@@ -14452,25 +14856,25 @@
                   },
                   "preparation_instructions": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "return_after_days": {
                     "type": "integer",
-                    "nullable": true,
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 2147483647,
+                    "nullable": true
                   },
                   "minimum_interval_days": {
                     "type": "integer",
-                    "nullable": true,
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 2147483647,
+                    "nullable": true
                   },
                   "calendar_color": {
                     "type": "string",
-                    "nullable": true,
-                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "nullable": true
                   },
                   "is_active": {
                     "type": "boolean"
@@ -14577,8 +14981,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -15368,8 +15772,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -15787,8 +16191,8 @@
                   },
                   "room_type": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "is_schedulable": {
                     "type": "boolean"
@@ -15806,8 +16210,8 @@
                   },
                   "notes": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "is_active": {
                     "type": "boolean"
@@ -15872,8 +16276,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -16326,8 +16730,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -16735,8 +17139,8 @@
                   },
                   "room_type": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "nullable": true
                   },
                   "is_schedulable": {
                     "type": "boolean"
@@ -16754,8 +17158,8 @@
                   },
                   "notes": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "is_active": {
                     "type": "boolean"
@@ -16831,8 +17235,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -17743,8 +18147,8 @@
                           },
                           "valid_until": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date"
+                            "format": "date",
+                            "nullable": true
                           },
                           "notes": {
                             "type": "string",
@@ -17760,8 +18164,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -18177,17 +18581,17 @@
                   },
                   "practitioner_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "room_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "day_of_week": {
                     "type": "integer",
@@ -18218,13 +18622,13 @@
                   },
                   "valid_until": {
                     "type": "string",
-                    "nullable": true,
-                    "format": "date"
+                    "format": "date",
+                    "nullable": true
                   },
                   "notes": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   }
                 }
               }
@@ -18289,8 +18693,8 @@
                     },
                     "valid_until": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date"
+                      "format": "date",
+                      "nullable": true
                     },
                     "notes": {
                       "type": "string",
@@ -18306,8 +18710,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -18763,8 +19167,8 @@
                     },
                     "valid_until": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date"
+                      "format": "date",
+                      "nullable": true
                     },
                     "notes": {
                       "type": "string",
@@ -18780,8 +19184,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -19201,13 +19605,13 @@
                   },
                   "valid_until": {
                     "type": "string",
-                    "nullable": true,
-                    "format": "date"
+                    "format": "date",
+                    "nullable": true
                   },
                   "notes": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   }
                 }
               }
@@ -19283,8 +19687,8 @@
                     },
                     "valid_until": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date"
+                      "format": "date",
+                      "nullable": true
                     },
                     "notes": {
                       "type": "string",
@@ -19300,8 +19704,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -20181,8 +20585,8 @@
                           },
                           "valid_until": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date"
+                            "format": "date",
+                            "nullable": true
                           },
                           "notes": {
                             "type": "string",
@@ -20198,8 +20602,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -20698,7 +21102,6 @@
                           },
                           "recurrence": {
                             "type": "object",
-                            "nullable": true,
                             "properties": {
                               "frequency": {
                                 "type": "string",
@@ -20712,10 +21115,11 @@
                               },
                               "until": {
                                 "type": "string",
-                                "nullable": true,
-                                "format": "date-time"
+                                "format": "date-time",
+                                "nullable": true
                               }
-                            }
+                            },
+                            "nullable": true
                           },
                           "created_at": {
                             "type": "string",
@@ -20727,8 +21131,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -21076,24 +21480,24 @@
                 "properties": {
                   "unit_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "practitioner_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "room_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "starts_at": {
                     "type": "string",
@@ -21112,12 +21516,11 @@
                   },
                   "reason": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "recurrence": {
                     "type": "object",
-                    "nullable": true,
                     "required": [
                       "frequency",
                       "interval"
@@ -21138,11 +21541,12 @@
                       },
                       "until": {
                         "type": "string",
-                        "nullable": true,
                         "format": "date-time",
-                        "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+                        "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$",
+                        "nullable": true
                       }
-                    }
+                    },
+                    "nullable": true
                   }
                 }
               }
@@ -21197,7 +21601,6 @@
                     },
                     "recurrence": {
                       "type": "object",
-                      "nullable": true,
                       "properties": {
                         "frequency": {
                           "type": "string",
@@ -21211,10 +21614,11 @@
                         },
                         "until": {
                           "type": "string",
-                          "nullable": true,
-                          "format": "date-time"
+                          "format": "date-time",
+                          "nullable": true
                         }
-                      }
+                      },
+                      "nullable": true
                     },
                     "created_at": {
                       "type": "string",
@@ -21226,8 +21630,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -22069,7 +22473,6 @@
                     },
                     "recurrence": {
                       "type": "object",
-                      "nullable": true,
                       "properties": {
                         "frequency": {
                           "type": "string",
@@ -22083,10 +22486,11 @@
                         },
                         "until": {
                           "type": "string",
-                          "nullable": true,
-                          "format": "date-time"
+                          "format": "date-time",
+                          "nullable": true
                         }
-                      }
+                      },
+                      "nullable": true
                     },
                     "created_at": {
                       "type": "string",
@@ -22098,8 +22502,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -22437,24 +22841,24 @@
                 "properties": {
                   "unit_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "practitioner_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "room_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "starts_at": {
                     "type": "string",
@@ -22473,12 +22877,11 @@
                   },
                   "reason": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   },
                   "recurrence": {
                     "type": "object",
-                    "nullable": true,
                     "required": [
                       "frequency",
                       "interval"
@@ -22499,11 +22902,12 @@
                       },
                       "until": {
                         "type": "string",
-                        "nullable": true,
                         "format": "date-time",
-                        "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+                        "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$",
+                        "nullable": true
                       }
-                    }
+                    },
+                    "nullable": true
                   }
                 }
               }
@@ -22569,7 +22973,6 @@
                     },
                     "recurrence": {
                       "type": "object",
-                      "nullable": true,
                       "properties": {
                         "frequency": {
                           "type": "string",
@@ -22583,10 +22986,11 @@
                         },
                         "until": {
                           "type": "string",
-                          "nullable": true,
-                          "format": "date-time"
+                          "format": "date-time",
+                          "nullable": true
                         }
-                      }
+                      },
+                      "nullable": true
                     },
                     "created_at": {
                       "type": "string",
@@ -22598,8 +23002,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -23450,8 +23854,8 @@
                           },
                           "deleted_at": {
                             "type": "string",
-                            "nullable": true,
-                            "format": "date-time"
+                            "format": "date-time",
+                            "nullable": true
                           }
                         }
                       }
@@ -23884,10 +24288,10 @@
                   },
                   "room_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "appointment_date": {
                     "type": "string",
@@ -23918,8 +24322,8 @@
                   },
                   "notes": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   }
                 }
               }
@@ -23999,8 +24403,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -24471,8 +24875,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -24891,10 +25295,10 @@
                   },
                   "room_id": {
                     "type": "string",
-                    "nullable": true,
                     "minLength": 1,
                     "maxLength": 36,
-                    "pattern": "\\S"
+                    "pattern": "\\S",
+                    "nullable": true
                   },
                   "appointment_date": {
                     "type": "string",
@@ -24917,8 +25321,8 @@
                   },
                   "notes": {
                     "type": "string",
-                    "nullable": true,
-                    "maxLength": 10000
+                    "maxLength": 10000,
+                    "nullable": true
                   }
                 }
               }
@@ -25011,8 +25415,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -25911,8 +26315,8 @@
                     },
                     "deleted_at": {
                       "type": "string",
-                      "nullable": true,
-                      "format": "date-time"
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -26284,6 +26688,1429 @@
                     "detail",
                     "code"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/business/organizations": {
+      "get": {
+        "summary": "List Organizations",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "description": "Returns all active organizations for the current tenant.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of organizations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "List of organizations",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Organization",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "legalName",
+                  "tradeName",
+                  "cnpj"
+                ],
+                "properties": {
+                  "legalName": {
+                    "type": "string"
+                  },
+                  "tradeName": {
+                    "type": "string"
+                  },
+                  "cnpj": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/business/organizations/{id}": {
+      "get": {
+        "summary": "Get Organization By ID",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Organization",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deactivate / Soft Delete Organization",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/business/organization-units": {
+      "get": {
+        "summary": "List Organization Units",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "organizationId",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Organization Unit",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "organizationId",
+                  "name",
+                  "cnesCode"
+                ],
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/business/organization-units/{id}": {
+      "put": {
+        "summary": "Update Organization Unit",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deactivate / Soft Delete Organization Unit",
+        "tags": [
+          "Business & Registries: Organizations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/business/specialties": {
+      "get": {
+        "summary": "List Medical Specialties",
+        "tags": [
+          "Business & Registries: Specialties"
+        ],
+        "description": "Returns all active standardized medical specialties (CBO/FHIR catalog).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of specialties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "List of specialties",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "nameEn": {
+                        "type": "string"
+                      },
+                      "cboCode": {
+                        "type": "string"
+                      },
+                      "fhirCode": {
+                        "type": "string"
+                      },
+                      "isActive": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/business/staff": {
+      "get": {
+        "summary": "List Staff Members",
+        "tags": [
+          "Business & Registries: Staff"
+        ],
+        "description": "Returns all non-deleted administrative and auxiliary staff for the current tenant.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of staff members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "List of staff members",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Staff Member",
+        "tags": [
+          "Business & Registries: Staff"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fullName",
+                  "cpf",
+                  "birthDate",
+                  "staffType",
+                  "hireDate",
+                  "email"
+                ],
+                "properties": {
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "cpf": {
+                    "type": "string"
+                  },
+                  "birthDate": {
+                    "type": "string"
+                  },
+                  "staffType": {
+                    "type": "string"
+                  },
+                  "hireDate": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/business/staff/{id}": {
+      "get": {
+        "summary": "Get Staff Member by ID",
+        "tags": [
+          "Business & Registries: Staff"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Staff Member",
+        "tags": [
+          "Business & Registries: Staff"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deactivate / Soft Delete Staff Member",
+        "tags": [
+          "Business & Registries: Staff"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or invalid/expired token (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — Insufficient role or permissions (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (RFC 7807)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
                 }
               }
             }
