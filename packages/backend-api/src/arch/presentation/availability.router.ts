@@ -54,7 +54,7 @@ export function registerAvailabilityRoutes(
       tags: ['Availabilities'],
       security: SecurityBearer,
       summary: 'List availabilities',
-      description: 'Lists non-deleted availabilities in the authenticated tenant. Requires op_schedule READ permission.',
+      description: 'Lists non-deleted availabilities in the authenticated tenant. Requires attendance_schedule READ permission.',
       response: { ...availabilityErrors, 200: {
         type: 'object', properties: { items: { type: 'array', items: AvailabilitySchema }, total: { type: 'integer' } },
       } },
@@ -71,7 +71,7 @@ export function registerAvailabilityRoutes(
       tags: ['Availabilities'],
       security: SecurityBearer,
       summary: 'Create availability',
-      description: 'Creates a availability in the authenticated tenant. Requires op_schedule WRITE permission. tenant_id is assigned by the server.',
+      description: 'Creates a availability in the authenticated tenant. Requires attendance_schedule WRITE permission. tenant_id is assigned by the server.',
       response: { ...availabilityErrors, 201: AvailabilitySchema },
       body: { type: 'object', required: ['unit_id', 'day_of_week', 'start_time', 'end_time', 'slot_duration_minutes', 'timezone', 'valid_from'], additionalProperties: false, properties },
     },
@@ -79,7 +79,7 @@ export function registerAvailabilityRoutes(
 
   app.get<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Availabilities'], params, security: SecurityBearer, summary: 'Get availability',
-      description: 'Requires op_schedule READ permission. Deleted availabilities and availabilities in other tenants return 404.',
+      description: 'Requires attendance_schedule READ permission. Deleted availabilities and availabilities in other tenants return 404.',
       response: { ...availabilityErrors, 200: AvailabilitySchema } },
   }, async (request, reply) => {
     const availability = await repository(request).getById(request.params.id);
@@ -92,7 +92,7 @@ export function registerAvailabilityRoutes(
       tags: ['Availabilities'],
       security: SecurityBearer,
       summary: 'Create availability version',
-      description: 'Creates a new version and closes the previous validity period; returns a new ID. Requires op_schedule WRITE permission.',
+      description: 'Creates a new version and closes the previous validity period; returns a new ID. Requires attendance_schedule WRITE permission.',
       response: { ...availabilityErrors, 201: AvailabilitySchema },
       params,
       body: { type: 'object', required: ['valid_from'], additionalProperties: false, properties: versionProperties },
@@ -104,7 +104,7 @@ export function registerAvailabilityRoutes(
 
   app.get<{ Params: { id: string }; Querystring: { offset: number; limit: number } }>(basePath + '/:id/history', {
     schema: { tags: ['Availabilities'], params, querystring: pagination, security: SecurityBearer,
-      summary: 'Get availability history', description: 'Lists all versions, including deleted ones, in the authenticated tenant. Requires op_schedule READ.',
+      summary: 'Get availability history', description: 'Lists all versions, including deleted ones, in the authenticated tenant. Requires attendance_schedule READ.',
       response: { ...availabilityErrors, 200: { type: 'object', properties: { items: { type: 'array', items: AvailabilitySchema }, total: { type: 'integer' } } } } },
   }, async (request, reply) => {
     const history = await repository(request).history(request.params.id, request.query);
@@ -112,7 +112,7 @@ export function registerAvailabilityRoutes(
   });
   app.delete<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Availabilities'], params, security: SecurityBearer, summary: 'Delete availability',
-      description: 'Soft-deletes a availability in the authenticated tenant. Requires op_schedule DELETE permission.',
+      description: 'Soft-deletes a availability in the authenticated tenant. Requires attendance_schedule DELETE permission.',
       response: { ...availabilityErrors, 204: { type: 'null', description: 'Availability deleted; empty response' } } },
   }, async (request, reply) => {
     if (!await repository(request).softDelete(request.params.id)) return reply.status(404).send(notFound);

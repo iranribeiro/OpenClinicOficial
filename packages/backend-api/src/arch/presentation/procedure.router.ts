@@ -49,7 +49,7 @@ export function registerProcedureRoutes(
       tags: ['Procedures'],
       security: SecurityBearer,
       summary: 'List procedures',
-      description: 'Lists non-deleted procedures in the authenticated tenant. Requires base_procedures READ permission.',
+      description: 'Lists non-deleted procedures in the authenticated tenant. Requires registries_procedures READ permission.',
       response: { ...procedureErrors, 200: {
         type: 'object', properties: { items: { type: 'array', items: ProcedureSchema }, total: { type: 'integer' } },
       } },
@@ -71,7 +71,7 @@ export function registerProcedureRoutes(
       tags: ['Procedures'],
       security: SecurityBearer,
       summary: 'Create procedure',
-      description: 'Creates a procedure in the authenticated tenant. Requires base_procedures WRITE permission. tenant_id is assigned by the server.',
+      description: 'Creates a procedure in the authenticated tenant. Requires registries_procedures WRITE permission. tenant_id is assigned by the server.',
       response: { ...procedureErrors, 201: ProcedureSchema },
       body: { type: 'object', required: ['name', 'estimated_duration_minutes', 'requires_room'], additionalProperties: false, properties },
     },
@@ -79,7 +79,7 @@ export function registerProcedureRoutes(
 
   app.get<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Procedures'], params, security: SecurityBearer, summary: 'Get procedure',
-      description: 'Requires base_procedures READ permission. Deleted procedures and procedures in other tenants return 404.',
+      description: 'Requires registries_procedures READ permission. Deleted procedures and procedures in other tenants return 404.',
       response: { ...procedureErrors, 200: ProcedureSchema } },
   }, async (request, reply) => {
     const procedure = await repository(request).getById(request.params.id);
@@ -92,7 +92,7 @@ export function registerProcedureRoutes(
       tags: ['Procedures'],
       security: SecurityBearer,
       summary: 'Update procedure',
-      description: 'Updates supplied fields; omitted fields remain unchanged. Requires base_procedures WRITE permission.',
+      description: 'Updates supplied fields; omitted fields remain unchanged. Requires registries_procedures WRITE permission.',
       response: { ...procedureErrors, 200: ProcedureSchema },
       params,
       body: { type: 'object', minProperties: 1, additionalProperties: false, properties },
@@ -104,7 +104,7 @@ export function registerProcedureRoutes(
 
   app.delete<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Procedures'], params, security: SecurityBearer, summary: 'Delete procedure',
-      description: 'Soft-deletes a procedure in the authenticated tenant. Requires base_procedures DELETE permission.',
+      description: 'Soft-deletes a procedure in the authenticated tenant. Requires registries_procedures DELETE permission.',
       response: { ...procedureErrors, 204: { type: 'null', description: 'Procedure deleted; empty response' } } },
   }, async (request, reply) => {
     if (!await repository(request).softDelete(request.params.id)) return reply.status(404).send(notFound);

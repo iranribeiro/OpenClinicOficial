@@ -40,7 +40,7 @@ export function registerScheduleBlockRoutes(
       tags: ['ScheduleBlocks'],
       security: SecurityBearer,
       summary: 'List scheduleBlocks',
-      description: 'Lists non-deleted scheduleBlocks in the authenticated tenant. Requires op_schedule READ permission.',
+      description: 'Lists non-deleted scheduleBlocks in the authenticated tenant. Requires attendance_schedule READ permission.',
       response: { ...scheduleBlockErrors, 200: {
         type: 'object', properties: { items: { type: 'array', items: ScheduleBlockSchema }, total: { type: 'integer' } },
       } },
@@ -50,7 +50,7 @@ export function registerScheduleBlockRoutes(
 
   app.get<{ Querystring: BlockOccurrenceFilters }>(basePath + '/occurrences', {
     schema: { tags: ['ScheduleBlocks'], security: SecurityBearer, summary: 'List block occurrences',
-      description: 'Expands recurring blocks within a bounded interval; includes applicable global blocks. Requires op_schedule READ.',
+      description: 'Expands recurring blocks within a bounded interval; includes applicable global blocks. Requires attendance_schedule READ.',
       querystring: { type: 'object', required: ['from', 'to'], properties: { ...filters, from: instant, to: instant } },
       response: { ...scheduleBlockErrors, 200: { type: 'object', properties: { items: { type: 'array', items: BlockOccurrenceSchema }, total: { type: 'integer' } } } } },
   }, async request => new ScheduleBlockService(repository(request)).occurrences(request.query));
@@ -59,7 +59,7 @@ export function registerScheduleBlockRoutes(
       tags: ['ScheduleBlocks'],
       security: SecurityBearer,
       summary: 'Create schedule-block',
-      description: 'Creates a schedule-block in the authenticated tenant. Requires op_schedule WRITE permission. tenant_id is assigned by the server.',
+      description: 'Creates a schedule-block in the authenticated tenant. Requires attendance_schedule WRITE permission. tenant_id is assigned by the server.',
       response: { ...scheduleBlockErrors, 201: ScheduleBlockSchema },
       body: { type: 'object', required: ['starts_at', 'ends_at', 'timezone'], additionalProperties: false, properties },
     },
@@ -67,7 +67,7 @@ export function registerScheduleBlockRoutes(
 
   app.get<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['ScheduleBlocks'], params, security: SecurityBearer, summary: 'Get schedule-block',
-      description: 'Requires op_schedule READ permission. Deleted scheduleBlocks and scheduleBlocks in other tenants return 404.',
+      description: 'Requires attendance_schedule READ permission. Deleted scheduleBlocks and scheduleBlocks in other tenants return 404.',
       response: { ...scheduleBlockErrors, 200: ScheduleBlockSchema } },
   }, async (request, reply) => {
     const block = await repository(request).getById(request.params.id);
@@ -79,7 +79,7 @@ export function registerScheduleBlockRoutes(
       tags: ['ScheduleBlocks'],
       security: SecurityBearer,
       summary: 'Update schedule-block',
-      description: 'Updates supplied fields; omitted fields remain unchanged. Requires op_schedule WRITE permission.',
+      description: 'Updates supplied fields; omitted fields remain unchanged. Requires attendance_schedule WRITE permission.',
       response: { ...scheduleBlockErrors, 200: ScheduleBlockSchema },
       params,
       body: { type: 'object', minProperties: 1, additionalProperties: false, properties },
@@ -91,7 +91,7 @@ export function registerScheduleBlockRoutes(
 
   app.delete<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['ScheduleBlocks'], params, security: SecurityBearer, summary: 'Delete schedule-block',
-      description: 'Soft-deletes a schedule-block in the authenticated tenant. Requires op_schedule DELETE permission.',
+      description: 'Soft-deletes a schedule-block in the authenticated tenant. Requires attendance_schedule DELETE permission.',
       response: { ...scheduleBlockErrors, 204: { type: 'null', description: 'ScheduleBlock deleted; empty response' } } },
   }, async (request, reply) => {
     if (!await repository(request).softDelete(request.params.id)) return reply.status(404).send(notFound);

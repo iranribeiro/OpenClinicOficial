@@ -43,7 +43,7 @@ describe('Availability application integration', () => {
     const response = await app.inject({ method, url: '/api/v1/business/availabilities' + suffix, headers,
       ...(['POST', 'PUT'].includes(method) ? { payload: { unit_id: 'unit-1', practitioner_id: 'p-1', day_of_week: 1, start_time: '08:00', end_time: '12:00', slot_duration_minutes: 30, timezone: 'America/Fortaleza', valid_from: '2026-10-01' } } : {}) });
     expect(response.statusCode).toBe(403);
-    expect(permission).toHaveBeenCalledWith('user-1', 'op_schedule', action);
+    expect(permission).toHaveBeenCalledWith('user-1', 'attendance_schedule', action);
     expect(uow.availabilitiesForTenant).not.toHaveBeenCalled();
   });
   it('registers all six endpoints in the served OpenAPI document', async () => {

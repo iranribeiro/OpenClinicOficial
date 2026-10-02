@@ -45,7 +45,7 @@ describe('Appointment authentication and routing component (mocked storage)', ()
       ...(method === 'PUT' ? { payload: { notes: 'Updated reception notes' } } : {}),
       ...(method === 'POST' ? { payload: { patient_id: 'patient-1', practitioner_id: 'p-1', procedure_id: 'procedure-1', unit_id: 'u-1', appointment_date: '2026-10-01T08:00:00Z', payer_type: 'PARTICULAR', source_channel: 'RECEPTION' } } : {}) });
     expect(response.statusCode).toBe(403);
-    expect(permission).toHaveBeenCalledWith('user-1', 'op_schedule', action);
+    expect(permission).toHaveBeenCalledWith('user-1', 'attendance_schedule', action);
     expect(uow.appointmentsForTenant).not.toHaveBeenCalled();
   });
   it('registers all six endpoints in the served OpenAPI document', async () => {

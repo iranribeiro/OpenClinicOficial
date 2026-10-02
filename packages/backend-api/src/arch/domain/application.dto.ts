@@ -23,6 +23,7 @@ export const UpdatePlatformApplicationSchema = z.object({
   defaultAcceptedLoginMethods: z.array(z.string()).optional(),
   defaultExtraSettings: z.record(z.unknown()).optional(),
   primaryLoginIdentifier: z.nativeEnum(LoginIdentifierType).optional(),
+  allowDirectUserCreation: z.boolean().optional(),
   isMultiTenant: z.boolean().optional(),
 });
 
@@ -60,6 +61,7 @@ export interface PlatformApplicationEntity {
   defaultAcceptedLoginMethods: string[];
   defaultExtraSettings: Record<string, unknown>;
   primaryLoginIdentifier: LoginIdentifierType;
+  allowDirectUserCreation: boolean;
   isMultiTenant: boolean;
   isDefaultApplication: boolean;
   isActive: boolean;

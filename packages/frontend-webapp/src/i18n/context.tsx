@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react';
-import { SupportedLocales, DEFAULT_LOCALE, type SupportedLocale } from '@openclinic/core/shared';
+import { SupportedLocales, DEFAULT_LOCALE, DEFAULT_PLATFORM_MANIFEST, type SupportedLocale } from '@openclinic/core/shared';
 import type { TranslationKey, TranslationCatalog } from './types.js';
 import { localePtBr } from './locales/pt-br.js';
 import { localeEnUs } from './locales/en-us.js';
 
-export const DEFAULT_STORAGE_PREFIX = 'openclinic';
+export const DEFAULT_STORAGE_PREFIX = DEFAULT_PLATFORM_MANIFEST.CODE;
 
 export function getLocaleStorageKey(prefix: string = DEFAULT_STORAGE_PREFIX): string {
   return `${prefix}_locale`;

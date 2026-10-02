@@ -43,7 +43,7 @@ describe('Room application integration', () => {
     const response = await app.inject({ method, url: '/api/v1/business/rooms' + suffix, headers,
       ...(['POST', 'PUT'].includes(method) ? { payload: { name: 'Sala 1', unit_id: 'unit-1', is_schedulable: false } } : {}) });
     expect(response.statusCode).toBe(403);
-    expect(permission).toHaveBeenCalledWith('user-1', 'menu_sys_institution', action);
+    expect(permission).toHaveBeenCalledWith('user-1', 'registries_organizations', action);
     expect(uow.roomsForTenant).not.toHaveBeenCalled();
   });
   it('registers all five endpoints in the served OpenAPI document', async () => {

@@ -60,6 +60,7 @@ export function registerApplicationRoutes(
       defaultDialingCode: defaultApp.defaultDialingCode,
       acceptedLoginMethods: defaultApp.defaultAcceptedLoginMethods,
       primaryLoginIdentifier: defaultApp.primaryLoginIdentifier ?? LoginIdentifierType.CPF,
+      allowDirectUserCreation: defaultApp.allowDirectUserCreation ?? false,
       sessionTimeoutMinutes: defaultApp.defaultSessionTimeoutMinutes,
     });
   };
@@ -87,6 +88,7 @@ export function registerApplicationRoutes(
             defaultDialingCode: { type: 'string' },
             acceptedLoginMethods: { type: 'array', items: { type: 'string' } },
             primaryLoginIdentifier: { type: 'string', enum: Object.values(LoginIdentifierType) },
+            allowDirectUserCreation: { type: 'boolean' },
             sessionTimeoutMinutes: { type: 'number' },
           },
         },
@@ -138,6 +140,7 @@ export function registerApplicationRoutes(
               defaultAcceptedLoginMethods: { type: 'array', items: { type: 'string' } },
               defaultExtraSettings: { type: 'object', additionalProperties: true },
               primaryLoginIdentifier: { type: 'string', enum: Object.values(LoginIdentifierType) },
+              allowDirectUserCreation: { type: 'boolean' },
               isMultiTenant: { type: 'boolean' },
               isDefaultApplication: { type: 'boolean' },
               isActive: { type: 'boolean' },
@@ -192,6 +195,7 @@ export function registerApplicationRoutes(
             defaultAcceptedLoginMethods: { type: 'array', items: { type: 'string' } },
             defaultExtraSettings: { type: 'object', additionalProperties: true },
             primaryLoginIdentifier: { type: 'string', enum: Object.values(LoginIdentifierType) },
+            allowDirectUserCreation: { type: 'boolean' },
             isMultiTenant: { type: 'boolean' },
           },
         },

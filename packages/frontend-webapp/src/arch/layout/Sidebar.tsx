@@ -17,10 +17,9 @@ export interface SidebarProps {
   canReadOpPayables: boolean;
   canReadOpBilling: boolean;
   canReadBaseOrganizations?: boolean;
-  canReadSysInstitution?: boolean;
   canReadBaseProcedures: boolean;
   canReadBaseHealthPlans: boolean;
-  canReadBasePractitioners?: boolean;
+  canReadBasePractitioners: boolean;
   canReadBaseStaff: boolean;
   // Management
   canReadMgmtIndicators?: boolean;
@@ -50,7 +49,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   canReadOpPayables,
   canReadOpBilling,
   canReadBaseOrganizations,
-  canReadSysInstitution,
   canReadBaseProcedures,
   canReadBaseHealthPlans,
   canReadBasePractitioners,
@@ -87,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const hasAttendanceSection = canReadOpSchedule || canReadOpAttendance;
   const hasClinicalSection = canReadOpPatients || canReadOpPep || canReadOpConsultations;
   const hasFinancialSection = canReadOpBilling || canReadOpCashflow || canReadOpPayables;
-  const canReadOrganizations = !!(canReadBaseOrganizations ?? canReadSysInstitution);
+  const canReadOrganizations = !!canReadBaseOrganizations;
   const hasRegistriesSection = canReadOrganizations || canReadBaseProcedures || canReadBaseHealthPlans || canReadBasePractitioners || canReadBaseStaff;
   
   // Management (BUSINESS)
@@ -409,7 +407,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           hasRegistriesSection,
           <>
             {renderSidebarNavItem('registries_organizations', t('NAV_BASE_ORGANIZATIONS'), canReadOrganizations)}
-            {renderSidebarNavItem('registries_practitioners', t('NAV_BASE_PRACTITIONERS'), !!canReadBasePractitioners)}
+            {renderSidebarNavItem('registries_practitioners', t('NAV_BASE_PRACTITIONERS'), canReadBasePractitioners)}
             {renderSidebarNavItem('registries_staff', t('NAV_BASE_STAFF'), canReadBaseStaff)}
             {renderSidebarNavItem('registries_health_plans', t('NAV_BASE_HEALTH_PLANS'), canReadBaseHealthPlans)}
             {renderSidebarNavItem('registries_procedures', t('NAV_BASE_PROCEDURES'), canReadBaseProcedures)}

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { AlertBannerType } from '@openclinic/core/enums';
-import { APP_CONFIG } from '../config/app.config.js';
+import { UI_CONFIG } from '../config/ui.constants.js';
 
 export { AlertBannerType };
 
@@ -16,7 +16,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
   type,
   message,
   onClose,
-  autoDismissSeconds = APP_CONFIG.NOTIFICATION_AUTO_DISMISS_SECONDS,
+  autoDismissSeconds = UI_CONFIG.NOTIFICATION_AUTO_DISMISS_SECONDS,
   icon,
 }) => {
   useEffect(() => {

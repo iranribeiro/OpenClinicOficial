@@ -1,7 +1,8 @@
 import React from 'react';
 import { Sidebar, type SidebarProps } from './Sidebar.js';
 import { Header, type HeaderProps } from './Header.js';
-import type { TokenPayload } from '../../types/auth.js';
+import { Footer } from './Footer.js';
+import type { TokenPayload } from '../types/auth.js';
 import { useI18n } from '../../i18n/index.js';
 
 export interface MainLayoutProps extends SidebarProps, HeaderProps {
@@ -24,15 +25,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   canReadOpPayables,
   canReadOpBilling,
   canReadBaseOrganizations,
-  canReadBasePractitioners,
   canReadBaseProcedures,
   canReadBaseHealthPlans,
+  canReadBasePractitioners,
   canReadBaseStaff,
   canReadMgmtIndicators,
   canReadMgmtReports,
   canReadSysSettings,
   canReadSysUsers,
-  canReadSysInstitution,
   canReadSysAudit,
   canReadPlatformSettings,
   canReadPlatformTenants,
@@ -75,15 +75,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         canReadOpPayables={canReadOpPayables}
         canReadOpBilling={canReadOpBilling}
         canReadBaseOrganizations={canReadBaseOrganizations}
-        canReadBasePractitioners={canReadBasePractitioners}
         canReadBaseProcedures={canReadBaseProcedures}
         canReadBaseHealthPlans={canReadBaseHealthPlans}
+        canReadBasePractitioners={canReadBasePractitioners}
         canReadBaseStaff={canReadBaseStaff}
         canReadMgmtIndicators={canReadMgmtIndicators}
         canReadMgmtReports={canReadMgmtReports}
         canReadSysSettings={canReadSysSettings}
         canReadSysUsers={canReadSysUsers}
-        canReadSysInstitution={canReadSysInstitution}
         canReadSysAudit={canReadSysAudit}
         canReadPlatformSettings={canReadPlatformSettings}
         canReadPlatformTenants={canReadPlatformTenants}
@@ -120,6 +119,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
         {/* Dynamic Content */}
         <div style={{ flex: 1 }}>{children}</div>
+
+        {/* Global Layout Footer */}
+        <Footer />
       </main>
     </div>
   );

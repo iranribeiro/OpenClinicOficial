@@ -33,12 +33,12 @@ export function registerAppointmentRoutes(app: FastifyInstance,
   { appointments }: { appointments: AppointmentRepository | ((request: FastifyRequest) => AppointmentRepository) }): void {
   const repo = (request: FastifyRequest) => typeof appointments === 'function' ? appointments(request) : appointments;
   app.get<{ Querystring: AppointmentFilters }>(base, { schema: { ...common, summary: 'List appointments',
-    description: 'Requires op_schedule READ. Date filters select overlapping half-open periods.',
+    description: 'Requires attendance_schedule READ. Date filters select overlapping half-open periods.',
     querystring: { type: 'object', properties: { offset: { type: 'integer', minimum: 0, default: 0 }, limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }, patient_id: id, practitioner_id: id, unit_id: id, room_id: id, status, from: instant, to: instant } },
     response: { ...appointmentErrors, 200: { type: 'object', properties: { items: { type: 'array', items: AppointmentSchema }, total: { type: 'integer' } } } },
   } }, async request => { validateAppointmentFilters(request.query); return repo(request).list(request.query); });
   app.post<{ Body: AppointmentInput }>(base, { preValidation: strictBody(properties), schema: { ...common, summary: 'Create appointment',
-    description: 'Requires op_schedule WRITE. Starts SCHEDULED. Duration defaults to the procedure. Fit-ins bypass availability only.',
+    description: 'Requires attendance_schedule WRITE. Starts SCHEDULED. Duration defaults to the procedure. Fit-ins bypass availability only.',
     body: { type: 'object', additionalProperties: false, required: ['patient_id', 'procedure_id', 'practitioner_id', 'unit_id', 'appointment_date', 'payer_type', 'source_channel'], properties },
     response: { ...appointmentErrors, 201: AppointmentSchema },
   } }, async (request, reply) => { validateAppointment(request.body); return reply.status(201).send(await repo(request).create(request.body)); });
@@ -49,21 +49,21 @@ export function registerAppointmentRoutes(app: FastifyInstance,
     return row ? reply.send(row) : reply.status(404).send(notFound);
   });
   app.put<{ Params: { id: string }; Body: AppointmentUpdateInput }>(base + '/:id', { preValidation: strictBody(updateProperties), schema: { ...common, params, summary: 'Update appointment',
-    description: 'Requires op_schedule WRITE. Only scheduled or confirmed appointments may be edited. Omitted fields and the original source_channel are preserved.',
+    description: 'Requires attendance_schedule WRITE. Only scheduled or confirmed appointments may be edited. Omitted fields and the original source_channel are preserved.',
     body: { type: 'object', additionalProperties: false, minProperties: 1, properties: updateProperties }, response: { ...appointmentErrors, 200: AppointmentSchema },
   } }, async (request, reply) => {
     const row = await repo(request).update(request.params.id, request.body);
     return row ? reply.send(row) : reply.status(404).send(notFound);
   });
   app.patch<{ Params: { id: string }; Body: { status: AppointmentStatus } }>(base + '/:id/status', { preValidation: strictBody({ status }), schema: { ...common, params, summary: 'Change appointment status',
-    description: 'Requires op_schedule WRITE. Enforces the documented lifecycle; terminal states cannot be reopened.',
+    description: 'Requires attendance_schedule WRITE. Enforces the documented lifecycle; terminal states cannot be reopened.',
     body: { type: 'object', additionalProperties: false, required: ['status'], properties: { status } }, response: { ...appointmentErrors, 200: AppointmentSchema },
   } }, async (request, reply) => {
     const row = await repo(request).changeStatus(request.params.id, request.body.status);
     return row ? reply.send(row) : reply.status(404).send(notFound);
   });
   app.delete<{ Params: { id: string } }>(base + '/:id', { schema: { ...common, params, summary: 'Delete appointment',
-    description: 'Requires op_schedule DELETE. Soft-deletes and cancels an appointment before arrival; preserves history.',
+    description: 'Requires attendance_schedule DELETE. Soft-deletes and cancels an appointment before arrival; preserves history.',
     response: { ...appointmentErrors, 204: { type: 'null', description: 'Empty response' } },
   } }, async (request, reply) => {
     if (!await repo(request).softDelete(request.params.id)) return reply.status(404).send(notFound);

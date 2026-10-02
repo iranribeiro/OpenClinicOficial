@@ -26,11 +26,19 @@ const practitioner: Practitioner = {
   is_clinical_staff: true,
   cpf: '12345678909',
   email: 'maria@example.com',
-  phone: '+5511999999999',
+  phone: '11999999999',
   is_active: true,
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),
   deleted_at: null,
+};
+
+/** The council registration is what the server derives `practitioner_type` from. */
+const registration = {
+  registration_type: 'CRM',
+  registration_number: '123456',
+  registration_state: 'SP',
+  is_primary: true,
 };
 
 const createPayload = {
@@ -39,7 +47,8 @@ const createPayload = {
   is_clinical_staff: true,
   cpf: '12345678909',
   email: 'maria@example.com',
-  phone: '+5511999999999',
+  phone: '11999999999',
+  registrations: [registration],
 };
 
 const practitionerJson = {
@@ -175,11 +184,28 @@ describe('Practitioner REST endpoints', () => {
     expect(practitioners.update).not.toHaveBeenCalled();
   });
 
-  it('requires a practitioner type on creation', async () => {
+  it('requires a council registration on creation', async () => {
     const { app, practitioners } = fixture();
-    const response = await app.inject({ method: 'POST', url: '/api/v1/business/practitioners', payload: { full_name: 'Maria' } });
+    const response = await app.inject({ method: 'POST', url: '/api/v1/business/practitioners',
+      payload: { full_name: 'Maria', email: 'maria@example.test' } });
+    expect(response.statusCode).toBe(422);
+    expect(practitioners.create).not.toHaveBeenCalled();
+  });
+
+  it('requires an email on creation because the cadastro creates an access account', async () => {
+    const { app, practitioners } = fixture();
+    const { email: _omitted, ...withoutEmail } = createPayload;
+    const response = await app.inject({ method: 'POST', url: '/api/v1/business/practitioners', payload: withoutEmail });
     expect(response.statusCode).toBe(400);
     expect(practitioners.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts a creation without an explicit practitioner type', async () => {
+    const { app, practitioners } = fixture();
+    const { practitioner_type: _derived, ...withoutType } = createPayload;
+    const response = await app.inject({ method: 'POST', url: '/api/v1/business/practitioners', payload: withoutType });
+    expect(response.statusCode).toBe(201);
+    expect(practitioners.create).toHaveBeenCalledWith(withoutType);
   });
 
   it('rejects an invalid CPF on creation before persistence', async () => {

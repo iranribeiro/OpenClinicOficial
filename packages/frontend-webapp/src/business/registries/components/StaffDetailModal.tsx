@@ -1,114 +1,228 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useI18n } from '../../../i18n/index.js';
 import {
   type StaffItem,
   type CreateStaffPayload,
   type StaffQualificationItem,
   checkIdentityUniqueness,
+  listOrganizationUnits,
 } from '../../../services/api.js';
+import type { OrganizationUnitData } from '../organizations/types.js';
+import { suggestUsername } from '../utils/suggest-username.js';
 import { FieldLabelWithTooltip } from '../../../arch/components/FormControls.js';
-import { Cpf, Email, Phone } from '@openclinic/core/shared';
+import {
+  BirthDate,
+  ContractType,
+  Cpf,
+  Email,
+  Phone,
+  StaffQualificationType,
+  StaffType,
+  Username,
+} from '@openclinic/core/shared';
+import type { TranslationKey } from '../../../i18n/types.js';
 
 export interface StaffDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (payload: CreateStaffPayload) => Promise<void>;
   initialData?: StaffItem | null;
+  /** Current staff list, used for client-side CPF/e-mail collision detection. */
+  existingStaff?: StaffItem[];
   isSaving: boolean;
 }
 
 type TabKey = 'general' | 'employment' | 'qualifications';
 
-const STAFF_TYPES = [
-  { value: 'RECEPTIONIST', labelKey: 'FIELD_STAFF_TYPE_RECEPTIONIST' },
-  { value: 'ADMINISTRATIVE', labelKey: 'FIELD_STAFF_TYPE_ADMINISTRATIVE' },
-  { value: 'FINANCIAL', labelKey: 'FIELD_STAFF_TYPE_FINANCIAL' },
-  { value: 'NURSE_TECH', labelKey: 'FIELD_STAFF_TYPE_NURSE_TECH' },
-  { value: 'OTHER', labelKey: 'FIELD_STAFF_TYPE_OTHER' },
-] as const;
+interface SelectOption<T extends string> {
+  value: T;
+  labelKey: TranslationKey;
+}
 
-const CONTRACT_TYPES = [
-  { value: 'CLT', labelKey: 'FIELD_CONTRACT_CLT' },
-  { value: 'PJ', labelKey: 'FIELD_CONTRACT_PJ' },
-  { value: 'INTERN', labelKey: 'FIELD_CONTRACT_INTERN' },
-  { value: 'TEMPORARY', labelKey: 'FIELD_CONTRACT_TEMPORARY' },
-] as const;
+/** Qualification row plus a stable client-side key so React can track rows across removal. */
+type QualificationRow = StaffQualificationItem & { rowKey: string };
+
+let qualificationRowSeq = 0;
+const nextRowKey = (): string => {
+  qualificationRowSeq += 1;
+  return `qual-row-${qualificationRowSeq}`;
+};
+
+const STAFF_TYPE_OPTIONS: readonly SelectOption<StaffType>[] = [
+  { value: StaffType.ADMINISTRATIVE, labelKey: 'FIELD_STAFF_TYPE_ADMINISTRATIVE' },
+  { value: StaffType.RECEPTIONIST, labelKey: 'FIELD_STAFF_TYPE_RECEPTIONIST' },
+  { value: StaffType.ASSISTANT, labelKey: 'FIELD_STAFF_TYPE_ASSISTANT' },
+  { value: StaffType.MANAGER, labelKey: 'FIELD_STAFF_TYPE_MANAGER' },
+  { value: StaffType.FINANCIAL, labelKey: 'FIELD_STAFF_TYPE_FINANCIAL' },
+  { value: StaffType.IT_SUPPORT, labelKey: 'FIELD_STAFF_TYPE_IT_SUPPORT' },
+  { value: StaffType.OTHER, labelKey: 'FIELD_STAFF_TYPE_OTHER' },
+];
+
+const CONTRACT_TYPE_OPTIONS: readonly SelectOption<ContractType>[] = [
+  { value: ContractType.CLT, labelKey: 'FIELD_CONTRACT_CLT' },
+  { value: ContractType.PJ, labelKey: 'FIELD_CONTRACT_PJ' },
+  { value: ContractType.INTERN, labelKey: 'FIELD_CONTRACT_INTERN' },
+  { value: ContractType.TEMPORARY, labelKey: 'FIELD_CONTRACT_TEMPORARY' },
+  { value: ContractType.VOLUNTEER, labelKey: 'FIELD_CONTRACT_VOLUNTEER' },
+  { value: ContractType.OTHER, labelKey: 'FIELD_CONTRACT_OTHER' },
+];
+
+const QUALIFICATION_TYPE_OPTIONS: readonly SelectOption<StaffQualificationType>[] = [
+  { value: StaffQualificationType.CERTIFICATE, labelKey: 'FIELD_STAFF_QUAL_CERTIFICATE' },
+  { value: StaffQualificationType.TRAINING, labelKey: 'FIELD_STAFF_QUAL_TRAINING' },
+  { value: StaffQualificationType.DIPLOMA, labelKey: 'FIELD_STAFF_QUAL_DIPLOMA' },
+  { value: StaffQualificationType.LICENSE, labelKey: 'FIELD_STAFF_QUAL_LICENSE' },
+  { value: StaffQualificationType.OTHER, labelKey: 'FIELD_STAFF_QUAL_OTHER' },
+];
+
+/**
+ * Today's date as YYYY-MM-DD in the browser's local timezone.
+ * `new Date().toISOString()` would return the UTC day, which is already
+ * tomorrow for BRT (UTC-3) users after 21:00.
+ */
+function todayLocalIsoDate(): string {
+  const now = new Date();
+  const localMs = now.getTime() - now.getTimezoneOffset() * 60_000;
+  return new Date(localMs).toISOString().slice(0, 10);
+}
 
 export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
   isOpen,
   onClose,
   onSave,
   initialData,
+  existingStaff,
   isSaving,
 }) => {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabKey>('general');
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // Scroll form body to top whenever the active tab changes — prevents content from appearing mid-page
+  useEffect(() => {
+    if (formRef.current) formRef.current.scrollTop = 0;
+  }, [activeTab]);
 
   // Tab 1: Identification
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  /** Set once the operator types in the login field, which stops the automatic suggestion. */
+  const [usernameEdited, setUsernameEdited] = useState(false);
   const [cpf, setCpf] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [notes, setNotes] = useState('');
 
   // Tab 2: Employment & Role
-  const [staffType, setStaffType] = useState('RECEPTIONIST');
-  const [department, setDepartment] = useState('Recepção e Atendimento');
-  const [jobTitle, setJobTitle] = useState('Recepcionista');
-  const [contractType, setContractType] = useState('CLT');
-  const [admissionDate, setAdmissionDate] = useState('');
+  const [staffType, setStaffType] = useState<StaffType>(StaffType.RECEPTIONIST);
+  const [department, setDepartment] = useState('');
+  const [jobPosition, setJobPosition] = useState('');
+  const [contractType, setContractType] = useState<ContractType>(ContractType.CLT);
+  const [hireDate, setHireDate] = useState('');
+  /** Ids of the units the collaborator works at; the API replaces the whole list on save. */
+  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
+  const [units, setUnits] = useState<OrganizationUnitData[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(false);
+  const [unitsError, setUnitsError] = useState(false);
 
   // Tab 3: Qualifications & Trainings
-  const [qualifications, setQualifications] = useState<StaffQualificationItem[]>([]);
+  const [qualifications, setQualifications] = useState<QualificationRow[]>([]);
 
   // Validation & onBlur tracking
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [showSaveHint, setShowSaveHint] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setFullName(initialData.full_name || '');
-      setUsername(initialData.username || (initialData.email ? initialData.email.split('@')[0] : ''));
+      setUsername(initialData.username || '');
       setCpf(initialData.cpf ? Cpf.format(initialData.cpf) : '');
+      setBirthDate(initialData.birth_date ? initialData.birth_date.slice(0, 10) : '');
       setEmail(initialData.email || '');
       setPhone(initialData.phone ? Phone.format(initialData.phone) : '');
-      setNotes(initialData.notes || '');
-      setStaffType(initialData.staff_type || 'RECEPTIONIST');
+      setStaffType((initialData.staff_type as StaffType) || StaffType.RECEPTIONIST);
       setDepartment(initialData.department || '');
-      setJobTitle(initialData.job_title || '');
-      setContractType(initialData.contract_type || 'CLT');
-      setAdmissionDate(initialData.admission_date ? initialData.admission_date.slice(0, 10) : '');
-      setQualifications(initialData.qualifications ? [...initialData.qualifications] : []);
+      setJobPosition(initialData.job_position || '');
+      setContractType((initialData.contract_type as ContractType) || ContractType.CLT);
+      setHireDate(initialData.hire_date ? initialData.hire_date.slice(0, 10) : '');
+      setQualifications(
+        (initialData.qualifications ?? []).map((q) => ({ ...q, rowKey: nextRowKey() })),
+      );
+      setSelectedUnitIds(initialData.units ?? []);
     } else {
       setFullName('');
       setUsername('');
+      setUsernameEdited(false);
       setCpf('');
+      setBirthDate('');
       setEmail('');
       setPhone('');
-      setNotes('');
-      setStaffType('RECEPTIONIST');
-      setDepartment('Recepção');
-      setJobTitle('Recepcionista');
-      setContractType('CLT');
-      setAdmissionDate(new Date().toISOString().slice(0, 10));
-      setQualifications([
-        {
-          qualification_type: 'TRAINING_LGPD',
-          title: 'Treinamento LGPD e Privacidade de Dados de Saúde',
-          institution_name: 'OpenClinic Compliance',
-          issue_date: new Date().toISOString().slice(0, 10),
-          certificate_number: 'LGPD-' + Math.floor(1000 + Math.random() * 9000),
-        },
-      ]);
+      setStaffType(StaffType.RECEPTIONIST);
+      setDepartment('');
+      setJobPosition('');
+      setContractType(ContractType.CLT);
+      setHireDate(todayLocalIsoDate());
+      setQualifications([]);
+      setSelectedUnitIds([]);
     }
     setActiveTab('general');
     setTouched({});
     setFormErrors({});
   }, [initialData, isOpen]);
 
+  // The unit catalog is tenant-scoped and rarely changes, so it is fetched once per mount.
+  useEffect(() => {
+    let isCancelled = false;
+    setUnitsLoading(true);
+    listOrganizationUnits()
+      .then((rows) => {
+        if (isCancelled) return;
+        setUnits(rows);
+        // Only active units are linkable, since the API refuses a link to an inactive one.
+        // A stored link to a unit that has since been deactivated is therefore not re-declared.
+        const activeIds = new Set(rows.filter((row) => row.isActive).map((row) => row.id));
+        setSelectedUnitIds((prev) => prev.filter((id) => activeIds.has(id)));
+      })
+      .catch(() => {
+        if (!isCancelled) setUnits([]);
+        setUnitsError(true);
+      })
+      .finally(() => {
+        if (!isCancelled) setUnitsLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  // Suggests a login from the name on a new cadastro. Typing in the field stops the
+  // suggestion; clearing it hands the choice back to the server, which picks the first
+  // free candidate and then numbered fallbacks.
+  useEffect(() => {
+    if (initialData || usernameEdited) return;
+    setUsername(suggestUsername(fullName));
+  }, [initialData, usernameEdited, fullName]);
+
+  // Close on Escape — no other modal in this package handles it, but a modal that
+  // only closes on a mouse click traps keyboard users.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
+
+  const activeUnits = units.filter((unit) => unit.isActive);
+
+  const toggleUnit = (unitId: string) => {
+    setSelectedUnitIds((prev) => prev.includes(unitId)
+      ? prev.filter((id) => id !== unitId)
+      : [...prev, unitId]);
+  };
 
   // Single-field validator
   const validateField = (field: string, currentVal?: unknown): string => {
@@ -121,14 +235,13 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
       }
       case 'username': {
         const val = (currentVal !== undefined ? currentVal : username) as string;
-        if (!val.trim()) return t('VALIDATION_ERROR_REQUIRED');
-        if (val.trim().length < 3 || !/^[a-zA-Z0-9._-]+$/.test(val.trim())) {
-          return t('VALIDATION_ERROR_USERNAME_INVALID');
-        }
+        // Empty is valid: the server suggests the first free login for the name.
+        if (!val.trim()) return '';
+        if (!Username.isValid(val)) return t('VALIDATION_ERROR_USERNAME_INVALID');
         const collisions = checkIdentityUniqueness({
           username: val.trim(),
           excludeStaffId: initialData?.id,
-          excludeUserId: initialData?.user_id,
+          staff: existingStaff,
         });
         if (collisions.usernameError) return collisions.usernameError;
         return '';
@@ -140,9 +253,15 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
         const collisions = checkIdentityUniqueness({
           cpf: val.trim(),
           excludeStaffId: initialData?.id,
-          excludeUserId: initialData?.user_id,
+          staff: existingStaff,
         });
         if (collisions.cpfError) return collisions.cpfError;
+        return '';
+      }
+      case 'birthDate': {
+        const val = (currentVal !== undefined ? currentVal : birthDate) as string;
+        if (!val) return t('VALIDATION_ERROR_REQUIRED');
+        if (!BirthDate.isValid(val)) return t('VALIDATION_ERROR_BIRTH_DATE_INVALID');
         return '';
       }
       case 'email': {
@@ -152,7 +271,7 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
         const collisions = checkIdentityUniqueness({
           email: val.trim(),
           excludeStaffId: initialData?.id,
-          excludeUserId: initialData?.user_id,
+          staff: existingStaff,
         });
         if (collisions.emailError) return collisions.emailError;
         return '';
@@ -162,13 +281,13 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
         if (!val.trim()) return t('VALIDATION_ERROR_REQUIRED');
         return '';
       }
-      case 'jobTitle': {
-        const val = (currentVal !== undefined ? currentVal : jobTitle) as string;
+      case 'jobPosition': {
+        const val = (currentVal !== undefined ? currentVal : jobPosition) as string;
         if (!val.trim()) return t('VALIDATION_ERROR_REQUIRED');
         return '';
       }
-      case 'admissionDate': {
-        const val = (currentVal !== undefined ? currentVal : admissionDate) as string;
+      case 'hireDate': {
+        const val = (currentVal !== undefined ? currentVal : hireDate) as string;
         if (!val) return t('VALIDATION_ERROR_REQUIRED');
         return '';
       }
@@ -202,7 +321,13 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
     }
   };
 
-  const validateAll = (): boolean => {
+  /**
+   * Validates every field and returns the collected errors.
+   * Returning the map (instead of only a boolean) lets the caller route to the
+   * right tab from the fresh errors — reading `formErrors` here would read the
+   * previous render's state and always route to the wrong tab.
+   */
+  const validateAll = (): Record<string, string> => {
     const errs: Record<string, string> = {};
 
     const fnErr = validateField('fullName');
@@ -214,112 +339,96 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
     const cpfErr = validateField('cpf');
     if (cpfErr) errs.cpf = cpfErr;
 
+    const bdErr = validateField('birthDate');
+    if (bdErr) errs.birthDate = bdErr;
+
     const emailErr = validateField('email');
     if (emailErr) errs.email = emailErr;
 
     const deptErr = validateField('department');
     if (deptErr) errs.department = deptErr;
 
-    const jobErr = validateField('jobTitle');
-    if (jobErr) errs.jobTitle = jobErr;
+    const jobErr = validateField('jobPosition');
+    if (jobErr) errs.jobPosition = jobErr;
 
-    const admErr = validateField('admissionDate');
-    if (admErr) errs.admissionDate = admErr;
-
-    const collisions = checkIdentityUniqueness({
-      username: username.trim(),
-      cpf: cpf.trim(),
-      email: email.trim(),
-      excludeStaffId: initialData?.id,
-      excludeUserId: initialData?.user_id,
-    });
-    if (collisions.usernameError) errs.username = collisions.usernameError;
-    if (collisions.cpfError) errs.cpf = collisions.cpfError;
-    if (collisions.emailError) errs.email = collisions.emailError;
+    const hireErr = validateField('hireDate');
+    if (hireErr) errs.hireDate = hireErr;
 
     setFormErrors(errs);
     setTouched({
       fullName: true,
       username: true,
       cpf: true,
+      birthDate: true,
       email: true,
       department: true,
-      jobTitle: true,
-      admissionDate: true,
+      jobPosition: true,
+      hireDate: true,
     });
 
-    return Object.keys(errs).length === 0;
+    return errs;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateAll()) {
-      if (formErrors.fullName || formErrors.username || formErrors.cpf || formErrors.email) {
-        setActiveTab('general');
-      } else {
-        setActiveTab('employment');
-      }
+
+    const errs = validateAll();
+    const errorKeys = Object.keys(errs);
+    if (errorKeys.length > 0) {
+      const generalFields = ['fullName', 'username', 'cpf', 'birthDate', 'email'];
+      setActiveTab(errorKeys.some((k) => generalFields.includes(k)) ? 'general' : 'employment');
       return;
     }
 
     const payload: CreateStaffPayload = {
       full_name: fullName.trim(),
-      username: username.trim().toLowerCase(),
-      cpf: Cpf.clean(cpf) || undefined,
-      email: email.trim().toLowerCase(),
-      phone: phone.trim() || undefined,
+      cpf: Cpf.clean(cpf),
+      birth_date: birthDate,
       staff_type: staffType,
       department: department.trim(),
-      job_title: jobTitle.trim(),
+      job_position: jobPosition.trim(),
       contract_type: contractType,
-      admission_date: admissionDate,
-      notes: notes.trim() || undefined,
-      login_password: !initialData ? 'Temp@1234' : undefined,
-      qualifications,
+      hire_date: hireDate,
+      phone: phone.trim() || undefined,
+      email: Email.clean(email),
+      username: username.trim().toLowerCase() || undefined,
+      units: selectedUnitIds,
+      qualifications: qualifications.map((q) => ({
+        qualification_type: q.qualification_type,
+        title: q.title.trim(),
+        issuing_institution: q.issuing_institution?.trim() || undefined,
+        year_issued: q.year_issued ?? undefined,
+        valid_until: q.valid_until ?? undefined,
+      })),
     };
 
-    try {
-      await onSave(payload);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        const msg = err.message;
-        if (msg.includes('username') || msg.includes('Nome de usuário')) {
-          setFormErrors((prev) => ({ ...prev, username: msg }));
-          setActiveTab('general');
-        } else if (msg.includes('cpf') || msg.includes('CPF')) {
-          setFormErrors((prev) => ({ ...prev, cpf: msg }));
-          setActiveTab('general');
-        } else if (msg.includes('email') || msg.includes('E-mail') || msg.includes('e-mail')) {
-          setFormErrors((prev) => ({ ...prev, email: msg }));
-          setActiveTab('general');
-        }
-      }
-    }
+    // `onSave` (StaffView.handleSave) owns error presentation for this resource:
+    // it reports failures via toast and resolves without rethrowing, so the modal
+    // simply stays open on failure.
+    await onSave(payload);
   };
 
   const addQualification = () => {
     setQualifications((prev) => [
       ...prev,
       {
-        qualification_type: 'TRAINING_LGPD',
+        rowKey: nextRowKey(),
+        qualification_type: StaffQualificationType.TRAINING,
         title: '',
-        institution_name: '',
-        issue_date: new Date().toISOString().slice(0, 10),
-        certificate_number: '',
+        issuing_institution: '',
+        year_issued: new Date().getFullYear(),
       },
     ]);
   };
 
-  const removeQualification = (idx: number) => {
-    setQualifications((prev) => prev.filter((_, i) => i !== idx));
+  const removeQualification = (rowKey: string) => {
+    setQualifications((prev) => prev.filter((q) => q.rowKey !== rowKey));
   };
 
-  const updateQualification = (idx: number, patch: Partial<StaffQualificationItem>) => {
-    setQualifications((prev) => {
-      const next = [...prev];
-      next[idx] = { ...next[idx], ...patch };
-      return next;
-    });
+  const updateQualification = (rowKey: string, patch: Partial<StaffQualificationItem>) => {
+    setQualifications((prev) =>
+      prev.map((q) => (q.rowKey === rowKey ? { ...q, ...patch } : q)),
+    );
   };
 
   const inputStyle: React.CSSProperties = {
@@ -347,73 +456,63 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(4px)',
+        backdropFilter: 'blur(3px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
+        zIndex: 1000,
         padding: 16,
       }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="staff-detail-modal-title"
         style={{
           background: '#ffffff',
-          borderRadius: 14,
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+          borderRadius: 12,
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
           maxWidth: 1040,
-          maxHeight: '90vh',
+          maxHeight: '94vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
           border: '1px solid #e2e8f0',
         }}
       >
-        {/* Modal Header */}
+        {/* ── Top Header: Title + Close Button ── */}
         <div
           style={{
-            padding: '16px 24px',
+            padding: '14px 22px',
             borderBottom: '1px solid #e2e8f0',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: '#ffffff',
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#f8fafc',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                background: 'rgba(2, 132, 199, 0.25)',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.25rem',
-              }}
+          <div>
+            <h3
+              id="staff-detail-modal-title"
+              style={{ margin: '0 0 2px', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}
             >
-              👥
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>
-                {initialData ? t('STAFF_MODAL_EDIT_TITLE') : t('STAFF_MODAL_CREATE_TITLE')}
-              </h2>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2 }}>
-                {fullName || t('STAFF_MODAL_SUBTITLE')}
-              </div>
-            </div>
+              👥 {initialData ? t('STAFF_MODAL_EDIT_TITLE') : t('STAFF_MODAL_CREATE_TITLE')}
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.76rem', color: '#64748b' }}>
+              {fullName || t('STAFF_MODAL_SUBTITLE')}
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('GLOBAL_BTN_CANCEL')}
             style={{
-              background: 'transparent',
+              background: 'none',
               border: 'none',
+              fontSize: '1.2rem',
               color: '#94a3b8',
-              fontSize: '1.25rem',
               cursor: 'pointer',
               padding: 4,
               borderRadius: 6,
@@ -423,14 +522,14 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Navigation - Full width, equal distribution, no horizontal scroll */}
+        {/* ── Tab Navigation ── */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            padding: '10px 20px',
-            background: '#f8fafc',
+            gap: 4,
+            padding: '8px 22px',
+            background: '#ffffff',
             borderBottom: '1px solid #e2e8f0',
             flexWrap: 'nowrap',
           }}
@@ -444,21 +543,22 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                 onClick={() => setActiveTab(tab.key)}
                 style={{
                   flex: 1,
-                  height: 36,
+                  height: 34,
                   padding: '0 14px',
-                  borderRadius: 8,
+                  borderRadius: 6,
                   border: isCurrent ? '1px solid #0284c7' : '1px solid transparent',
-                  background: isCurrent ? '#0284c7' : 'transparent',
-                  color: isCurrent ? '#ffffff' : '#64748b',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
+                  background: isCurrent ? '#eff6ff' : 'transparent',
+                  color: isCurrent ? '#0284c7' : '#64748b',
+                  fontSize: '0.80rem',
+                  fontWeight: isCurrent ? 700 : 500,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
+                  gap: 6,
                   whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
+                  transition: 'all 0.12s ease',
+                  borderBottom: isCurrent ? '2px solid #0284c7' : '2px solid transparent',
                 }}
               >
                 <span>{tab.icon}</span>
@@ -469,11 +569,19 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
         </div>
 
         {/* Modal Form Body */}
-        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column' }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        >
+          {/* Scrollable tab content */}
+          <div
+            ref={formRef}
+            style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}
+          >
           {/* Tab 1: Identification */}
           {activeTab === 'general' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 14, alignItems: 'flex-start' }}>
                 <div>
                   <FieldLabelWithTooltip label={t('FIELD_FULL_NAME')} required />
                   <input
@@ -503,16 +611,32 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   />
                   {formErrors.cpf && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.cpf}</span>}
                 </div>
+                <div>
+                  <FieldLabelWithTooltip label={t('FIELD_BIRTH_DATE')} required />
+                  <input
+                    type="date"
+                    value={birthDate}
+                    max={todayLocalIsoDate()}
+                    onBlur={() => handleBlur('birthDate')}
+                    onChange={(e) => handleFieldChange('birthDate', e.target.value, setBirthDate)}
+                    style={{ ...inputStyle, borderColor: formErrors.birthDate ? '#ef4444' : '#cbd5e1' }}
+                  />
+                  {formErrors.birthDate && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.birthDate}</span>}
+                </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 14, alignItems: 'flex-start' }}>
                 <div>
-                  <FieldLabelWithTooltip label={t('FIELD_USERNAME')} required tooltip={t('FIELD_USERNAME_TOOLTIP')} />
+                  <FieldLabelWithTooltip label={t('FIELD_USERNAME')} tooltip={t('FIELD_USERNAME_TOOLTIP')} />
                   <input
                     type="text"
                     value={username}
                     onBlur={() => handleBlur('username')}
-                    onChange={(e) => handleFieldChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''), setUsername)}
+                    onChange={(e) => {
+                      // Typing takes ownership of the field, so the name-based suggestion stops.
+                      setUsernameEdited(true);
+                      handleFieldChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''), setUsername);
+                    }}
                     placeholder="ex: carlos.silva"
                     style={{ ...inputStyle, borderColor: formErrors.username ? '#ef4444' : '#cbd5e1' }}
                   />
@@ -534,6 +658,7 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_PHONE')} />
                   <input
                     type="text"
+                    inputMode="tel"
                     value={phone}
                     maxLength={15}
                     onChange={(e) => setPhone(Phone.format(e.target.value))}
@@ -542,58 +667,6 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   />
                 </div>
               </div>
-
-              <div>
-                <FieldLabelWithTooltip label={t('FIELD_NOTES')} />
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t('FIELD_NOTES_STAFF_PLACEHOLDER')}
-                  rows={3}
-                  style={{ ...inputStyle, height: 'auto', padding: '8px 12px' }}
-                />
-              </div>
-
-              {initialData && (
-                <div
-                  style={{
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 10,
-                    padding: '12px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      background: '#e0f2fe',
-                      border: '1px solid #bae6fd',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.1rem',
-                      flexShrink: 0,
-                    }}
-                  >
-                    🔐
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a' }}>
-                      {t('FIELD_LINKED_ACCOUNT_TITLE')}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 2, lineHeight: 1.4 }}>
-                      {t('FIELD_LINKED_ACCOUNT_DESC', {
-                        cpf: Cpf.format(cpf || initialData.cpf || ''),
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -605,10 +678,10 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_STAFF_TYPE')} required />
                   <select
                     value={staffType}
-                    onChange={(e) => setStaffType(e.target.value)}
+                    onChange={(e) => setStaffType(e.target.value as StaffType)}
                     style={inputStyle}
                   >
-                    {STAFF_TYPES.map((st) => (
+                    {STAFF_TYPE_OPTIONS.map((st) => (
                       <option key={st.value} value={st.value}>
                         {t(st.labelKey)}
                       </option>
@@ -619,10 +692,10 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   <FieldLabelWithTooltip label={t('FIELD_CONTRACT_TYPE')} required />
                   <select
                     value={contractType}
-                    onChange={(e) => setContractType(e.target.value)}
+                    onChange={(e) => setContractType(e.target.value as ContractType)}
                     style={inputStyle}
                   >
-                    {CONTRACT_TYPES.map((ct) => (
+                    {CONTRACT_TYPE_OPTIONS.map((ct) => (
                       <option key={ct.value} value={ct.value}>
                         {t(ct.labelKey)}
                       </option>
@@ -645,28 +718,79 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   {formErrors.department && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.department}</span>}
                 </div>
                 <div>
-                  <FieldLabelWithTooltip label={t('STAFF_COL_ROLE')} required />
+                  <FieldLabelWithTooltip label={t('FIELD_JOB_TITLE')} required />
                   <input
                     type="text"
-                    value={jobTitle}
-                    onBlur={() => handleBlur('jobTitle')}
-                    onChange={(e) => handleFieldChange('jobTitle', e.target.value, setJobTitle)}
+                    value={jobPosition}
+                    onBlur={() => handleBlur('jobPosition')}
+                    onChange={(e) => handleFieldChange('jobPosition', e.target.value, setJobPosition)}
                     placeholder={t('STAFF_FIELD_ROLE_PLACEHOLDER')}
-                    style={{ ...inputStyle, borderColor: formErrors.jobTitle ? '#ef4444' : '#cbd5e1' }}
+                    style={{ ...inputStyle, borderColor: formErrors.jobPosition ? '#ef4444' : '#cbd5e1' }}
                   />
-                  {formErrors.jobTitle && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.jobTitle}</span>}
+                  {formErrors.jobPosition && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.jobPosition}</span>}
                 </div>
                 <div>
                   <FieldLabelWithTooltip label={t('FIELD_ADMISSION_DATE')} required />
                   <input
                     type="date"
-                    value={admissionDate}
-                    onBlur={() => handleBlur('admissionDate')}
-                    onChange={(e) => handleFieldChange('admissionDate', e.target.value, setAdmissionDate)}
-                    style={{ ...inputStyle, borderColor: formErrors.admissionDate ? '#ef4444' : '#cbd5e1' }}
+                    value={hireDate}
+                    onBlur={() => handleBlur('hireDate')}
+                    onChange={(e) => handleFieldChange('hireDate', e.target.value, setHireDate)}
+                    style={{ ...inputStyle, borderColor: formErrors.hireDate ? '#ef4444' : '#cbd5e1' }}
                   />
-                  {formErrors.admissionDate && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.admissionDate}</span>}
+                  {formErrors.hireDate && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.hireDate}</span>}
                 </div>
+              </div>
+
+              <div>
+                <FieldLabelWithTooltip label={t('FIELD_STAFF_UNITS')} tooltip={t('FIELD_STAFF_UNITS_TOOLTIP')} />
+                {unitsError ? (
+                  <div style={{ padding: 12, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: '0.78rem' }}>
+                    {t('STAFF_UNITS_LOAD_ERROR')}
+                  </div>
+                ) : unitsLoading ? (
+                  <div style={{ padding: 12, color: '#64748b', fontSize: '0.78rem' }}>{t('GLOBAL_LABEL_LOADING')}</div>
+                ) : activeUnits.length === 0 ? (
+                  <div style={{ padding: 12, background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 8, color: '#64748b', fontSize: '0.78rem' }}>
+                    {t('STAFF_UNITS_EMPTY')}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {activeUnits.map((unit) => {
+                        const isSelected = selectedUnitIds.includes(unit.id);
+                        return (
+                          <button
+                            key={unit.id}
+                            type="button"
+                            onClick={() => toggleUnit(unit.id)}
+                            aria-pressed={isSelected}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '7px 12px',
+                              borderRadius: 999,
+                              border: `1px solid ${isSelected ? '#0284c7' : '#cbd5e1'}`,
+                              background: isSelected ? '#e0f2fe' : '#ffffff',
+                              color: isSelected ? '#075985' : '#475569',
+                              fontSize: '0.78rem',
+                              fontWeight: isSelected ? 600 : 500,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <span aria-hidden="true">{isSelected ? '✓' : '+'}</span>
+                            {unit.name}
+                            {unit.cnesCode ? ` · ${unit.cnesCode}` : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                      {t('STAFF_UNITS_SELECTED', { count: selectedUnitIds.length })}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -703,9 +827,9 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   {t('STAFF_NO_QUALIFICATIONS')}
                 </div>
               ) : (
-                qualifications.map((qual, idx) => (
+                qualifications.map((qual) => (
                   <div
-                    key={idx}
+                    key={qual.rowKey}
                     style={{
                       background: '#f8fafc',
                       border: '1px solid #e2e8f0',
@@ -721,15 +845,14 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                       <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_TRAINING_TYPE')}</label>
                       <select
                         value={qual.qualification_type}
-                        onChange={(e) => updateQualification(idx, { qualification_type: e.target.value })}
+                        onChange={(e) => updateQualification(qual.rowKey, { qualification_type: e.target.value })}
                         style={inputStyle}
                       >
-                        <option value="TRAINING_LGPD">{t('FIELD_STAFF_QUAL_TRAINING_LGPD')}</option>
-                        <option value="TISS_BILLING">{t('FIELD_STAFF_QUAL_TISS_BILLING')}</option>
-                        <option value="BASIC_LIFE_SUPPORT">{t('FIELD_STAFF_QUAL_BASIC_LIFE_SUPPORT')}</option>
-                        <option value="CUSTOMER_SERVICE">{t('FIELD_STAFF_QUAL_CUSTOMER_SERVICE')}</option>
-                        <option value="SOFTWARE_TRAINING">{t('FIELD_STAFF_QUAL_SOFTWARE_TRAINING')}</option>
-                        <option value="OTHER">{t('FIELD_STAFF_QUAL_OTHER')}</option>
+                        {QUALIFICATION_TYPE_OPTIONS.map((qt) => (
+                          <option key={qt.value} value={qt.value}>
+                            {t(qt.labelKey)}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -738,7 +861,7 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                       <input
                         type="text"
                         value={qual.title}
-                        onChange={(e) => updateQualification(idx, { title: e.target.value })}
+                        onChange={(e) => updateQualification(qual.rowKey, { title: e.target.value })}
                         placeholder={t('STAFF_FIELD_COURSE_PLACEHOLDER')}
                         style={inputStyle}
                       />
@@ -748,26 +871,28 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                       <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_STAFF_QUAL_ISSUING_INSTITUTION')}</label>
                       <input
                         type="text"
-                        value={qual.institution_name}
-                        onChange={(e) => updateQualification(idx, { institution_name: e.target.value })}
+                        value={qual.issuing_institution || ''}
+                        onChange={(e) => updateQualification(qual.rowKey, { issuing_institution: e.target.value })}
                         placeholder={t('STAFF_FIELD_INSTITUTION_PLACEHOLDER')}
                         style={inputStyle}
                       />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_STAFF_QUAL_ISSUE_DATE')}</label>
+                      <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_YEAR')}</label>
                       <input
-                        type="date"
-                        value={qual.issue_date || ''}
-                        onChange={(e) => updateQualification(idx, { issue_date: e.target.value })}
+                        type="number"
+                        value={qual.year_issued ?? ''}
+                        onChange={(e) => updateQualification(qual.rowKey, { year_issued: Number(e.target.value) || null })}
+                        placeholder="2012"
                         style={inputStyle}
                       />
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => removeQualification(idx)}
+                      onClick={() => removeQualification(qual.rowKey)}
+                      aria-label={t('REGISTRIES_BTN_REMOVE')}
                       style={{
                         background: '#fee2e2',
                         color: '#dc2626',
@@ -788,12 +913,15 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
             </div>
           )}
 
-          {/* Modal Footer with subtle hover tooltip on Save */}
+          </div>
+
+          {/* Modal Footer — outside scroll, always visible */}
           <div
             style={{
-              marginTop: 24,
-              paddingTop: 16,
+              flexShrink: 0,
+              padding: '14px 24px',
               borderTop: '1px solid #e2e8f0',
+              background: '#ffffff',
               display: 'flex',
               justifyContent: 'flex-end',
               alignItems: 'center',
@@ -818,54 +946,27 @@ export const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
               {t('GLOBAL_BTN_CANCEL')}
             </button>
 
-            <div style={{ position: 'relative' }}>
-              {showSaveHint && !initialData && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '100%',
-                    right: 0,
-                    marginBottom: 8,
-                    width: 290,
-                    padding: '8px 12px',
-                    background: '#0f172a',
-                    color: '#f8fafc',
-                    borderRadius: 8,
-                    fontSize: '0.75rem',
-                    lineHeight: 1.35,
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.25)',
-                    pointerEvents: 'none',
-                    zIndex: 50,
-                    textAlign: 'left',
-                  }}
-                >
-                  💡 {t('REGISTRY_SAVE_ACCOUNT_TOOLTIP')}
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={isSaving}
-                onMouseEnter={() => setShowSaveHint(true)}
-                onMouseLeave={() => setShowSaveHint(false)}
-                style={{
-                  height: 38,
-                  padding: '0 22px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: '#0284c7',
-                  color: '#ffffff',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  opacity: isSaving ? 0.7 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                {isSaving ? t('GLOBAL_LABEL_SAVING') : t('STAFF_SAVE_BTN')}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSaving}
+              style={{
+                height: 38,
+                padding: '0 22px',
+                borderRadius: 8,
+                border: 'none',
+                background: '#0284c7',
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                opacity: isSaving ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              {isSaving ? t('GLOBAL_LABEL_SAVING') : t('STAFF_SAVE_BTN')}
+            </button>
           </div>
         </form>
       </div>

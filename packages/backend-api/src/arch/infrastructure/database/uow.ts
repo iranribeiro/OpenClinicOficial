@@ -20,6 +20,9 @@ import { eq } from 'drizzle-orm';
 import { PostgresPractitionerRepository } from './practitioner.repository.js';
 import { PostgresPatientRepository } from './patient.repository.js';
 
+/** Drizzle's transaction handle, which exposes the same query surface as the pool. */
+export type PostgresTransaction = Parameters<Parameters<PostgresJsDatabase['transaction']>[0]>[0];
+
 class LockoutRepository implements ILockoutRepository {
   constructor(private readonly db: PostgresJsDatabase) {}
 
@@ -76,11 +79,21 @@ export class UnitOfWork implements IAMUnitOfWork {
   }
 
   async commit(): Promise<void> {}
+
+  /**
+   * Binds a UnitOfWork to an already open transaction so that IAM and domain writes commit
+   * together. Drizzle exposes the same query surface on a transaction as on the pool, so the
+   * pool-typed constructor is reused under this one deliberate widening.
+   */
+  forTransaction(tx: PostgresTransaction): UnitOfWork {
+    return new UnitOfWork(tx as unknown as PostgresJsDatabase);
+  }
+
   patientsForTenant(tenantId: string): PostgresPatientRepository {
     return new PostgresPatientRepository(this.db, tenantId);
   }
   practitionersForTenant(tenantId: string): PostgresPractitionerRepository {
-    return new PostgresPractitionerRepository(this.db, tenantId);
+    return new PostgresPractitionerRepository(this.db, tenantId, this);
   }
   unitsForTenant(tenantId: string): PostgresUnitRepository {
     return new PostgresUnitRepository(this.db, tenantId);

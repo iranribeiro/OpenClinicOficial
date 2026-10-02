@@ -256,8 +256,11 @@ test('[SEC-ACL] persisted READ permission does not grant WRITE or DELETE', async
   const s = await api.scenario(); await s.windows(); const row = await s.create('appointments', s.input);
   const user = await api.identity(s.tenant, 'USER');
   await api.expectHttp(403, 'GET', base, user.token);
-  await api.sql`INSERT INTO iam_permissions (id, tenant_id, user_id, resource_id, action, effect)
-    SELECT gen_random_uuid()::text, ${s.tenant}, ${user.userId}, id, 'READ', 'ALLOW' FROM sys_application_resources WHERE item_code = 'op_schedule'`;
+  const granted = await api.sql`INSERT INTO iam_permissions (id, tenant_id, user_id, resource_id, action, effect)
+    SELECT gen_random_uuid()::text, ${s.tenant}, ${user.userId}, id, 'READ', 'ALLOW' FROM sys_application_resources WHERE item_code = 'attendance_schedule' RETURNING id`;
+  // A stale item_code would make this INSERT ... SELECT a silent no-op, and the 403 below would then
+  // read as a permission bug. Pin the catalogue row so a future rename fails here instead.
+  assert.equal(granted.length, 1);
   assert.equal((await api.expectHttp(200, 'GET', base, user.token)).total, 1);
   for (const [method, suffix, body] of [['POST', '', s.input], ['PUT', '/' + row.id, { notes: 'denied' }], ['PATCH', '/' + row.id + '/status', { status: 'CANCELLED' }], ['DELETE', '/' + row.id, undefined]] as const) {
     await api.expectHttp(403, method, base + suffix, user.token, body);

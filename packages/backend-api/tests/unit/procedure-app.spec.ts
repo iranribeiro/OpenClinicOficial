@@ -43,7 +43,7 @@ describe('Procedure application integration', () => {
     const response = await app.inject({ method, url: '/api/v1/business/procedures' + suffix, headers,
       ...(['POST', 'PUT'].includes(method) ? { payload: { name: 'Consulta', estimated_duration_minutes: 30, requires_room: false } } : {}) });
     expect(response.statusCode).toBe(403);
-    expect(permission).toHaveBeenCalledWith('user-1', 'base_procedures', action);
+    expect(permission).toHaveBeenCalledWith('user-1', 'registries_procedures', action);
     expect(uow.proceduresForTenant).not.toHaveBeenCalled();
   });
   it('registers all five endpoints in the served OpenAPI document', async () => {

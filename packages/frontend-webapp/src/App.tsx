@@ -11,6 +11,7 @@ export default function App() {
   const { accessToken, isInitializing } = useAuth();
   const { config } = useConfig();
   const { setLocale, setSupportedLocales } = useI18n();
+  const location = useLocation();
 
   useEffect(() => {
     if (config?.supportedLocales && Array.isArray(config.supportedLocales)) {
@@ -35,7 +36,6 @@ export default function App() {
     );
   }
 
-  const location = useLocation();
   const redirectTarget = (location.state as { from?: { pathname?: string; search?: string } })?.from?.pathname
     ? `${(location.state as { from: { pathname: string; search?: string } }).from.pathname}${(location.state as { from: { pathname: string; search?: string } }).from.search || ''}`
     : '/dashboard';

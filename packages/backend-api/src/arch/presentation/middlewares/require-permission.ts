@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import { AccessDeniedError, ErrorCode, ResourceAction, UserRole, UserRole as UserRoleEnum, ResourceAction as ActionEnum, ROLE_HIERARCHY } from '@openclinic/core';
+import { AccessDeniedError, ErrorCode, ResourceAction, UserRole, UserRole as UserRoleEnum, ResourceAction as ActionEnum, ROLE_HIERARCHY, type AppResourceCode } from '@openclinic/core';
 import type { IAMUnitOfWork } from '../../domain/repositories.js';
 import { IAMPermissionService } from '../../application/services/iam-permission.service.js';
 
@@ -19,7 +19,12 @@ export function requireRole(minimumRole: UserRole) {
   };
 }
 
-export function requirePermission(uow: IAMUnitOfWork, resourceKey: string, action: ResourceAction = ActionEnum.READ) {
+/**
+ * Guards a route on a manifest resource. The key is typed against the manifest codes so a route
+ * left pointing at a renamed resource fails to compile, instead of silently denying every
+ * non-OWNER caller the way a stale string literal does at runtime.
+ */
+export function requirePermission(uow: IAMUnitOfWork, resourceKey: AppResourceCode, action: ResourceAction = ActionEnum.READ) {
   const service = new IAMPermissionService(uow);
   return async function checkPermission(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
     const user = request.user;

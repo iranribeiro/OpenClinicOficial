@@ -42,7 +42,7 @@ export function registerUnitRoutes(
       tags: ['Units'],
       security: SecurityBearer,
       summary: 'List units',
-      description: 'Lists non-deleted units in the authenticated tenant. Requires menu_sys_institution READ permission.',
+      description: 'Lists non-deleted units in the authenticated tenant. Requires registries_organizations READ permission.',
       response: { ...unitErrors, 200: {
         type: 'object', properties: { items: { type: 'array', items: UnitSchema }, total: { type: 'integer' } },
       } },
@@ -61,7 +61,7 @@ export function registerUnitRoutes(
       tags: ['Units'],
       security: SecurityBearer,
       summary: 'Create unit',
-      description: 'Creates a unit in the authenticated tenant. Requires menu_sys_institution WRITE permission. tenant_id is assigned by the server.',
+      description: 'Creates a unit in the authenticated tenant. Requires registries_organizations WRITE permission. tenant_id is assigned by the server.',
       response: { ...unitErrors, 201: UnitSchema },
       body: { type: 'object', required: ['name', 'organization_id'], additionalProperties: false, properties },
     },
@@ -69,7 +69,7 @@ export function registerUnitRoutes(
 
   app.get<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Units'], params, security: SecurityBearer, summary: 'Get unit',
-      description: 'Requires menu_sys_institution READ permission. Deleted units and units in other tenants return 404.',
+      description: 'Requires registries_organizations READ permission. Deleted units and units in other tenants return 404.',
       response: { ...unitErrors, 200: UnitSchema } },
   }, async (request, reply) => {
     const unit = await repository(request).getById(request.params.id);
@@ -81,7 +81,7 @@ export function registerUnitRoutes(
       tags: ['Units'],
       security: SecurityBearer,
       summary: 'Update unit',
-      description: 'Updates supplied fields; omitted fields remain unchanged. Requires menu_sys_institution WRITE permission.',
+      description: 'Updates supplied fields; omitted fields remain unchanged. Requires registries_organizations WRITE permission.',
       response: { ...unitErrors, 200: UnitSchema },
       params,
       body: { type: 'object', minProperties: 1, additionalProperties: false, properties },
@@ -93,7 +93,7 @@ export function registerUnitRoutes(
 
   app.delete<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Units'], params, security: SecurityBearer, summary: 'Delete unit',
-      description: 'Soft-deletes a unit in the authenticated tenant. Requires menu_sys_institution DELETE permission.',
+      description: 'Soft-deletes a unit in the authenticated tenant. Requires registries_organizations DELETE permission.',
       response: { ...unitErrors, 204: { type: 'null', description: 'Unit deleted; empty response' } } },
   }, async (request, reply) => {
     if (!await repository(request).getById(request.params.id)) return reply.status(404).send(notFound);

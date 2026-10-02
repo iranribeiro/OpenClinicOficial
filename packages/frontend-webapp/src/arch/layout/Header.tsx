@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { t, useI18n, getLocaleMetadata, type SupportedLocale, type TranslationKey } from '../../i18n/index.js';
-import { APP_RESOURCE_MANIFEST } from '@openclinic/core/shared';
-import type { UserProfile } from '../../types/auth.js';
+import { APP_RESOURCE_MANIFEST, UserRole } from '@openclinic/core/shared';
+import type { UserProfile } from '../types/auth.js';
 
 export interface HeaderProps {
   activeTab: string;
@@ -40,11 +40,12 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [isUserMenuOpen]);
 
-  const roleBadgeColor = {
-    OWNER: { bg: 'rgba(217, 119, 6, 0.12)', text: '#b45309', border: 'rgba(217, 119, 6, 0.25)' },
-    ADMIN: { bg: 'rgba(99, 102, 241, 0.12)', text: '#4338ca', border: 'rgba(99, 102, 241, 0.25)' },
-    USER: { bg: 'rgba(148, 163, 184, 0.15)', text: '#475569', border: 'rgba(148, 163, 184, 0.30)' },
-  }[user?.role ?? 'USER'];
+  const ROLE_BADGE_COLORS: Record<UserRole, { bg: string; text: string; border: string }> = {
+    [UserRole.OWNER]: { bg: 'rgba(217, 119, 6, 0.12)', text: '#b45309', border: 'rgba(217, 119, 6, 0.25)' },
+    [UserRole.ADMIN]: { bg: 'rgba(99, 102, 241, 0.12)', text: '#4338ca', border: 'rgba(99, 102, 241, 0.25)' },
+    [UserRole.USER]: { bg: 'rgba(148, 163, 184, 0.15)', text: '#475569', border: 'rgba(148, 163, 184, 0.30)' },
+  };
+  const roleBadgeColor = ROLE_BADGE_COLORS[user?.role ?? UserRole.USER];
 
   const cleanDisplayName = (user?.full_name ?? user?.display_name ?? t('LABEL_USER_DEFAULT')).replace(/\s*\((Owner|Admin|User)\)/gi, '');
 
@@ -55,85 +56,59 @@ export const Header: React.FC<HeaderProps> = ({
       return t(manifestRes.labelKey as TranslationKey);
     }
 
-    // 2. Specific or legacy tab keys
+    // 2. Canonical tab keys fallback
     switch (activeTab) {
       case 'attendance_schedule':
-      case 'op_schedule':
         return t('NAV_ATTENDANCE_SCHEDULE');
       case 'attendance_queue':
-      case 'op_attendance':
         return t('NAV_ATTENDANCE_QUEUE');
       case 'clinical_patients':
-      case 'op_patients':
         return t('NAV_CLINICAL_PATIENTS');
       case 'clinical_records':
-      case 'op_pep':
         return t('NAV_CLINICAL_PEP');
       case 'clinical_consultations':
-      case 'op_consultations':
         return t('NAV_CLINICAL_CONSULTATIONS');
       case 'financial_cashflow':
-      case 'op_cashflow':
         return t('NAV_FINANCIAL_CASHFLOW');
       case 'financial_payables':
-      case 'op_payables':
         return t('NAV_FINANCIAL_PAYABLES');
       case 'financial_billing':
-      case 'op_billing':
         return t('NAV_FINANCIAL_BILLING');
       case 'registries_organizations':
-      case 'base_organizations':
         return t('NAV_BASE_ORGANIZATIONS');
       case 'registries_practitioners':
-      case 'base_practitioners':
         return t('NAV_BASE_PRACTITIONERS');
       case 'registries_staff':
-      case 'base_staff':
         return t('NAV_BASE_STAFF');
       case 'registries_procedures':
-      case 'base_procedures':
         return t('NAV_BASE_PROCEDURES');
       case 'registries_health_plans':
-      case 'base_health_plans':
         return t('NAV_BASE_HEALTH_PLANS');
       case 'management_metrics':
-      case 'menu_mgmt_indicators':
         return t('NAV_MGMT_INDICATORS');
       case 'management_reports':
-      case 'menu_mgmt_reports':
         return t('NAV_MGMT_REPORTS');
       case 'system_settings':
-      case 'menu_sys_settings':
         return t('NAV_SYS_SETTINGS');
       case 'system_users':
-      case 'menu_sys_users':
         return t('NAV_SYS_USERS');
       case 'system_audit':
-      case 'menu_sys_audit':
         return t('NAV_SYS_AUDIT');
       case 'platform_settings':
-      case 'menu_platform_settings':
         return t('NAV_PLATFORM_SETTINGS');
       case 'platform_tenants':
-      case 'menu_platform_tenants':
         return t('NAV_PLATFORM_TENANTS');
       case 'platform_api_keys':
-      case 'menu_platform_api_keys':
         return t('NAV_PLATFORM_API_KEYS');
       case 'platform_integrations':
-      case 'menu_platform_webhooks':
         return t('NAV_PLATFORM_WEBHOOKS');
       case 'platform_policies':
-      case 'menu_platform_policies':
         return t('NAV_PLATFORM_POLICIES');
       case 'account_profile':
-      case 'menu_profile':
         return t('USER_MENU_PROFILE');
       case 'account_security':
-      case 'menu_password':
         return t('USER_MENU_SECURITY');
       case 'account_help':
-      case 'menu_help':
         return t('USER_MENU_HELP');
       default:
         return activeTab;
@@ -368,7 +343,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onSelectTab('menu_profile');
+                  onSelectTab('account_profile');
                   setIsUserMenuOpen(false);
                 }}
                 style={{
@@ -379,9 +354,9 @@ export const Header: React.FC<HeaderProps> = ({
                   padding: '8px 10px',
                   borderRadius: 6,
                   border: 'none',
-                  background: activeTab === 'menu_profile' ? '#f0f9ff' : 'transparent',
-                  color: activeTab === 'menu_profile' ? '#0284c7' : '#334155',
-                  fontWeight: activeTab === 'menu_profile' ? 600 : 500,
+                  background: activeTab === 'account_profile' ? '#f0f9ff' : 'transparent',
+                  color: activeTab === 'account_profile' ? '#0284c7' : '#334155',
+                  fontWeight: activeTab === 'account_profile' ? 600 : 500,
                   fontSize: '0.82rem',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -395,7 +370,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onSelectTab('menu_password');
+                  onSelectTab('account_security');
                   setIsUserMenuOpen(false);
                 }}
                 style={{
@@ -406,9 +381,9 @@ export const Header: React.FC<HeaderProps> = ({
                   padding: '8px 10px',
                   borderRadius: 6,
                   border: 'none',
-                  background: activeTab === 'menu_password' ? '#f0f9ff' : 'transparent',
-                  color: activeTab === 'menu_password' ? '#0284c7' : '#334155',
-                  fontWeight: activeTab === 'menu_password' ? 600 : 500,
+                  background: activeTab === 'account_security' ? '#f0f9ff' : 'transparent',
+                  color: activeTab === 'account_security' ? '#0284c7' : '#334155',
+                  fontWeight: activeTab === 'account_security' ? 600 : 500,
                   fontSize: '0.82rem',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -422,7 +397,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onSelectTab('menu_help');
+                  onSelectTab('account_help');
                   setIsUserMenuOpen(false);
                 }}
                 style={{
@@ -433,9 +408,9 @@ export const Header: React.FC<HeaderProps> = ({
                   padding: '8px 10px',
                   borderRadius: 6,
                   border: 'none',
-                  background: activeTab === 'menu_help' ? '#f0f9ff' : 'transparent',
-                  color: activeTab === 'menu_help' ? '#0284c7' : '#334155',
-                  fontWeight: activeTab === 'menu_help' ? 600 : 500,
+                  background: activeTab === 'account_help' ? '#f0f9ff' : 'transparent',
+                  color: activeTab === 'account_help' ? '#0284c7' : '#334155',
+                  fontWeight: activeTab === 'account_help' ? 600 : 500,
                   fontSize: '0.82rem',
                   cursor: 'pointer',
                   textAlign: 'left',

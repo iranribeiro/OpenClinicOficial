@@ -36,7 +36,7 @@ export function registerPatientRoutes(
       tags: ['Patients'],
       security: SecurityBearer,
       summary: 'List patients',
-      description: 'Lists non-deleted patients in the authenticated tenant. Requires op_patients READ permission.',
+      description: 'Lists non-deleted patients in the authenticated tenant. Requires clinical_patients READ permission.',
       response: { ...patientErrors, 200: {
         type: 'object', properties: { items: { type: 'array', items: PatientSchema }, total: { type: 'integer' } },
       } },
@@ -55,7 +55,7 @@ export function registerPatientRoutes(
       tags: ['Patients'],
       security: SecurityBearer,
       summary: 'Create patient',
-      description: 'Creates a patient in the authenticated tenant. Requires op_patients WRITE permission. tenant_id is assigned by the server.',
+      description: 'Creates a patient in the authenticated tenant. Requires clinical_patients WRITE permission. tenant_id is assigned by the server.',
       response: { ...patientErrors, 201: PatientSchema },
       body: { type: 'object', required: ['full_name'], additionalProperties: false, properties },
     },
@@ -63,7 +63,7 @@ export function registerPatientRoutes(
 
   app.get<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Patients'], params, security: SecurityBearer, summary: 'Get patient',
-      description: 'Requires op_patients READ permission. Deleted patients and patients in other tenants return 404.',
+      description: 'Requires clinical_patients READ permission. Deleted patients and patients in other tenants return 404.',
       response: { ...patientErrors, 200: PatientSchema } },
   }, async (request, reply) => {
     const patient = await repository(request).getById(request.params.id);
@@ -75,7 +75,7 @@ export function registerPatientRoutes(
       tags: ['Patients'],
       security: SecurityBearer,
       summary: 'Update patient',
-      description: 'Updates supplied fields; omitted fields remain unchanged. Requires op_patients WRITE permission.',
+      description: 'Updates supplied fields; omitted fields remain unchanged. Requires clinical_patients WRITE permission.',
       response: { ...patientErrors, 200: PatientSchema },
       params,
       body: { type: 'object', minProperties: 1, additionalProperties: false, properties },
@@ -87,7 +87,7 @@ export function registerPatientRoutes(
 
   app.delete<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Patients'], params, security: SecurityBearer, summary: 'Delete patient',
-      description: 'Soft-deletes a patient in the authenticated tenant. Requires op_patients DELETE permission.',
+      description: 'Soft-deletes a patient in the authenticated tenant. Requires clinical_patients DELETE permission.',
       response: { ...patientErrors, 204: { type: 'null', description: 'Patient deleted; empty response' } } },
   }, async (request, reply) => {
     if (!await repository(request).getById(request.params.id)) return reply.status(404).send(notFound);

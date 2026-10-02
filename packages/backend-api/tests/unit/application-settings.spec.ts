@@ -31,6 +31,7 @@ describe('ApplicationRepository & Application Settings', () => {
     defaultAcceptedLoginMethods: ['PASSWORD'],
     defaultExtraSettings: {},
     primaryLoginIdentifier: LoginIdentifierType.CPF,
+    allowDirectUserCreation: true,
     isMultiTenant: false,
     isDefaultApplication: true,
     isActive: true,

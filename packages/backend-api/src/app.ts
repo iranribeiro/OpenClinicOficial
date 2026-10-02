@@ -196,7 +196,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'op_patients', action)(request, reply);
+      await requirePermission(uow, 'clinical_patients', action)(request, reply);
     });
     registerPatientRoutes(patientApp, {
       patients: (request) => uow.patientsForTenant(request.user!.tenant_id!),
@@ -209,7 +209,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'base_staff', action)(request, reply);
+      await requirePermission(uow, 'registries_practitioners', action)(request, reply);
     });
     registerPractitionerRoutes(practitionerApp, {
       practitioners: (request) => uow.practitionersForTenant(request.user!.tenant_id!),
@@ -222,7 +222,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'menu_sys_institution', action)(request, reply);
+      await requirePermission(uow, 'registries_organizations', action)(request, reply);
     });
     registerUnitRoutes(unitApp, {
       units: (request) => uow.unitsForTenant(request.user!.tenant_id!),
@@ -235,7 +235,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'base_procedures', action)(request, reply);
+      await requirePermission(uow, 'registries_procedures', action)(request, reply);
     });
     registerProcedureRoutes(procedureApp, {
       procedures: (request) => uow.proceduresForTenant(request.user!.tenant_id!),
@@ -248,7 +248,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'menu_sys_institution', action)(request, reply);
+      await requirePermission(uow, 'registries_organizations', action)(request, reply);
     });
     registerRoomRoutes(roomApp, {
       rooms: (request) => uow.roomsForTenant(request.user!.tenant_id!),
@@ -261,7 +261,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'op_schedule', action)(request, reply);
+      await requirePermission(uow, 'attendance_schedule', action)(request, reply);
     });
     registerAvailabilityRoutes(availabilityApp, {
       availabilities: (request) => uow.availabilitiesForTenant(request.user!.tenant_id!),
@@ -274,7 +274,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'op_schedule', action)(request, reply);
+      await requirePermission(uow, 'attendance_schedule', action)(request, reply);
     });
     registerScheduleBlockRoutes(scheduleBlockApp, {
       scheduleBlocks: (request) => uow.scheduleBlocksForTenant(request.user!.tenant_id!),
@@ -287,7 +287,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       if (!request.user?.tenant_id) throw new AccessDeniedError(ErrorCode.FORBIDDEN);
       const action = request.method === 'DELETE' ? ResourceAction.DELETE
         : request.method === 'GET' || request.method === 'HEAD' ? ResourceAction.READ : ResourceAction.WRITE;
-      await requirePermission(uow, 'op_schedule', action)(request, reply);
+      await requirePermission(uow, 'attendance_schedule', action)(request, reply);
     });
     registerAppointmentRoutes(appointmentApp, {
       appointments: (request) => uow.appointmentsForTenant(request.user!.tenant_id!),

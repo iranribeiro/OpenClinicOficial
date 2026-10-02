@@ -99,8 +99,14 @@ export async function startApiHarness() {
       const unit = await create('units', { organization_id: org, name: 'Unit A' });
       const unit2 = await create('units', { organization_id: org, name: 'Unit B' });
       const patient = await create('patients', { full_name: 'Synthetic Patient' });
-      const practitioner = await create('practitioners', { full_name: 'Synthetic Professional', practitioner_type: 'PHYSICIAN' });
-      const practitioner2 = await create('practitioners', { full_name: 'Second Professional', practitioner_type: 'PHYSICIAN' });
+      // docs/cadastros.md derives the category from the council, so a registration is mandatory on
+      // create, and every professional gets an IAM account, which needs a unique email of its own.
+      const practitioner = await create('practitioners', { full_name: 'Synthetic Professional', practitioner_type: 'PHYSICIAN',
+        email: `practitioner-${randomUUID()}@example.test`,
+        registrations: [{ registration_type: 'CRM', registration_number: '100001', registration_state: 'SP', is_primary: true }] });
+      const practitioner2 = await create('practitioners', { full_name: 'Second Professional', practitioner_type: 'PHYSICIAN',
+        email: `practitioner-${randomUUID()}@example.test`,
+        registrations: [{ registration_type: 'CRM', registration_number: '100002', registration_state: 'SP', is_primary: true }] });
       const room = await create('rooms', { name: 'Room A', unit_id: unit.id, is_schedulable: true });
       const room2 = await create('rooms', { name: 'Room B', unit_id: unit2.id, is_schedulable: true });
       const procedure = await create('procedures', { name: 'Consultation', estimated_duration_minutes: 30, requires_room: true });

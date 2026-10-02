@@ -1190,7 +1190,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onNavigate
         initialData={editingOrg}
         onSave={handleSaveOrg}
         onClose={() => setIsOrgModalOpen(false)}
-        onNavigateToGeneralHelp={() => onNavigateTab?.('menu_help')}
+        onNavigateToGeneralHelp={() => onNavigateTab?.('account_help')}
       />
 
       {/* Unit Modal */}
@@ -1242,7 +1242,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onNavigate
       <OrganizationHelpModal
         isOpen={isHelpModalOpen}
         onClose={() => setIsHelpModalOpen(false)}
-        onNavigateToGeneralHelp={() => onNavigateTab?.('menu_help')}
+        onNavigateToGeneralHelp={() => onNavigateTab?.('account_help')}
       />
     </div>
   );

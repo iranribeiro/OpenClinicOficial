@@ -12,7 +12,7 @@ import {
   getPublicConfig,
 } from '../services/api.js';
 import { t } from '../i18n/index.js';
-import type { UserProfile, TokenPayload, IAMCapability } from '../types/auth.js';
+import type { UserProfile, TokenPayload, IAMCapability } from '../arch/types/auth.js';
 import { ResourceAction, UserRole, AUTH_SECURITY_DEFAULTS } from '@openclinic/core/shared';
 
 function decodeJwtPayload(token: string): TokenPayload | null {

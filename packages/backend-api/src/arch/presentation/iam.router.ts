@@ -87,7 +87,7 @@ export function registerIamRoutes(app: FastifyInstance, uow: IAMUnitOfWork, jwtC
             items: {
               type: 'object',
               properties: {
-                key: { type: 'string', example: 'op_schedule' },
+                key: { type: 'string', example: 'attendance_schedule' },
                 label: { type: 'string', example: 'Appointments & Scheduling' },
                 icon: { type: 'string', nullable: true },
                 route: { type: 'string', nullable: true },

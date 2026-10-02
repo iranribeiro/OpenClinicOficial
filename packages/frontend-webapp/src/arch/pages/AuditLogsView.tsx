@@ -1,5 +1,5 @@
 import React from 'react';
-import type { UserProfile } from '../../types/auth.js';
+import type { UserProfile } from '../types/auth.js';
 import { useI18n } from '../../i18n/index.js';
 import { MockDataBanner } from '../../components/MockDataBanner.js';
 

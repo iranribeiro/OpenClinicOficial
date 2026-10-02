@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useI18n } from '../../../i18n/index.js';
 import {
   type PractitionerItem,
@@ -9,10 +9,14 @@ import {
   type PractitionerQualificationItem,
   type PractitionerAvailabilityItem,
   listSpecialties,
+  listOrganizationUnits,
   checkIdentityUniqueness,
 } from '../../../services/api.js';
+import type { OrganizationUnitData } from '../organizations/types.js';
+import { PractitionerUnitsScheduleTab } from './PractitionerUnitsScheduleTab.js';
+import { suggestUsername } from '../utils/suggest-username.js';
 import { ToggleSwitch, FieldLabelWithTooltip } from '../../../arch/components/FormControls.js';
-import { Cpf, Cns, Email, CouncilRegistration, Rqe, Phone } from '@openclinic/core/shared';
+import { Cpf, Cns, Email, CouncilRegistration, Rqe, Phone, Username } from '@openclinic/core/shared';
 
 export interface PractitionerDetailModalProps {
   isOpen: boolean;
@@ -30,16 +34,8 @@ const BRAZILIAN_STATES = [
   'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ] as const;
-const DAYS_OF_WEEK = [
-  { id: 1, labelKey: 'DAY_MONDAY' },
-  { id: 2, labelKey: 'DAY_TUESDAY' },
-  { id: 3, labelKey: 'DAY_WEDNESDAY' },
-  { id: 4, labelKey: 'DAY_THURSDAY' },
-  { id: 5, labelKey: 'DAY_FRIDAY' },
-  { id: 6, labelKey: 'DAY_SATURDAY' },
-  { id: 0, labelKey: 'DAY_SUNDAY' },
-] as const;
-
+// Overlay padding — must stay in sync with the overlay style below.
+const OVERLAY_PADDING = 16;
 export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = ({
   isOpen,
   onClose,
@@ -50,11 +46,42 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabKey>('general');
   const [specialtiesCatalog, setSpecialtiesCatalog] = useState<SpecialtyItem[]>([]);
+  const formRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [topOffset, setTopOffset] = useState<number | null>(null);
+
+  // Reset scroll to top whenever tab changes — prevents content from appearing mid-page
+  useEffect(() => {
+    if (formRef.current) formRef.current.scrollTop = 0;
+  }, [activeTab]);
+
+  // The modal opens with the identification tab centered; its measured top offset is
+  // then reused so every other tab — shorter or taller — starts at that same position
+  // instead of being re-centered on its own height.
+  useEffect(() => {
+    if (!isOpen || activeTab !== 'general') return;
+
+    const measureCenteredTop = () => {
+      const overlay = overlayRef.current;
+      const card = cardRef.current;
+      if (!overlay || !card) return;
+      const available = overlay.clientHeight - OVERLAY_PADDING * 2;
+      const height = Math.min(card.offsetHeight, available);
+      setTopOffset(Math.max(0, (available - height) / 2));
+    };
+
+    measureCenteredTop();
+    window.addEventListener('resize', measureCenteredTop);
+    return () => window.removeEventListener('resize', measureCenteredTop);
+  }, [isOpen, activeTab]);
 
   // Tab 1: Identification
   const [fullName, setFullName] = useState('');
   const [socialName, setSocialName] = useState('');
   const [username, setUsername] = useState('');
+  /** Set once the operator types in the login field, which stops the automatic suggestion. */
+  const [usernameEdited, setUsernameEdited] = useState(false);
   const [cpf, setCpf] = useState('');
   const [cns, setCns] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -76,8 +103,11 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
   // Tab 4: Academic Qualifications
   const [qualifications, setQualifications] = useState<PractitionerQualificationItem[]>([]);
 
-  // Tab 5: Clinical Schedule & Availability
+  // Tab 5: Organization units & weekly schedule
   const [availability, setAvailability] = useState<PractitionerAvailabilityItem[]>([]);
+  const [units, setUnits] = useState<OrganizationUnitData[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(true);
+  const [unitsError, setUnitsError] = useState(false);
 
   // Validation & onBlur tracking
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -88,13 +118,36 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
     listSpecialties().then(setSpecialtiesCatalog).catch(() => {});
   }, []);
 
+  // Organization units the practitioner can be linked to.
+  useEffect(() => {
+    let isCancelled = false;
+    setUnitsLoading(true);
+    listOrganizationUnits()
+      .then((result) => {
+        if (isCancelled) return;
+        setUnits(Array.isArray(result) ? result : []);
+        setUnitsError(false);
+      })
+      .catch(() => {
+        if (isCancelled) return;
+        setUnits([]);
+        setUnitsError(true);
+      })
+      .finally(() => {
+        if (!isCancelled) setUnitsLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     if (initialData) {
       setFullName(initialData.full_name || '');
       setSocialName(initialData.social_name || '');
-      setUsername(initialData.username || (initialData.email ? initialData.email.split('@')[0] : ''));
+      setUsername(initialData.username || '');
       setCpf(initialData.cpf ? Cpf.format(initialData.cpf) : '');
-      setCns(initialData.cns || '');
+      setCns(initialData.cns ? Cns.format(initialData.cns) : '');
       setBirthDate(initialData.birth_date ? initialData.birth_date.slice(0, 10) : '');
       setGender(initialData.gender || 'MALE');
       setEmail(initialData.email || '');
@@ -112,6 +165,7 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
       setFullName('');
       setSocialName('');
       setUsername('');
+      setUsernameEdited(false);
       setCpf('');
       setCns('');
       setBirthDate('1985-01-01');
@@ -130,25 +184,27 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
           is_primary: true,
         },
       ]);
-      setSpecialties([
-        {
-          specialty_id: 'spec-001',
-          specialty_name: 'Clínica Geral',
-          is_primary: true,
-          rqe_number: '',
-        },
-      ]);
+      // The catalog loads asynchronously and a specialty is chosen by its server id, so a
+      // new practitioner starts empty rather than seeded with an id the API would reject.
+      setSpecialties([]);
       setQualifications([]);
-      setAvailability([
-        { day_of_week: 1, start_time: '08:00', end_time: '12:00', slot_duration_minutes: 30 },
-        { day_of_week: 3, start_time: '14:00', end_time: '18:00', slot_duration_minutes: 30 },
-      ]);
+      // A new practitioner starts with no unit linked — linking one is what creates
+      // the first shift (and therefore the link itself).
+      setAvailability([]);
       setDigitalSignatureType('NONE');
     }
     setActiveTab('general');
     setTouched({});
     setFormErrors({});
   }, [initialData, isOpen]);
+
+  // Suggests a login from the name on a new cadastro. Typing in the field stops the
+  // suggestion; clearing it hands the choice back to the server, which picks the first
+  // free candidate and then numbered fallbacks.
+  useEffect(() => {
+    if (initialData || usernameEdited) return;
+    setUsername(suggestUsername(fullName));
+  }, [initialData, usernameEdited, fullName]);
 
   if (!isOpen) return null;
 
@@ -164,9 +220,7 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
       case 'username': {
         const val = (currentVal !== undefined ? currentVal : username) as string;
         if (!val.trim()) return t('VALIDATION_ERROR_REQUIRED');
-        if (val.trim().length < 3 || !/^[a-zA-Z0-9._-]+$/.test(val.trim())) {
-          return t('VALIDATION_ERROR_USERNAME_INVALID');
-        }
+        if (!Username.isValid(val)) return t('VALIDATION_ERROR_USERNAME_INVALID');
         const collisions = checkIdentityUniqueness({
           username: val.trim(),
           excludePractitionerId: initialData?.id,
@@ -295,9 +349,20 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
     }
 
     specialties.forEach((spec, idx) => {
+      // The API resolves the specialty by its server id, so an unset one cannot be saved.
+      if (!spec.specialty_id) errs[`spec_${idx}_id`] = t('VALIDATION_ERROR_REQUIRED');
       if (spec.rqe_number && spec.rqe_number.trim() && !Rqe.isValid(spec.rqe_number)) {
         errs[`spec_${idx}_rqe`] = t('VALIDATION_ERROR_RQE_INVALID');
       }
+    });
+
+    // The API requires all three on every qualification row, so an incomplete row is
+    // reported here rather than as a 400 on submit.
+    qualifications.forEach((qual, idx) => {
+      if (!qual.degree_name.trim()) errs[`qual_${idx}_degree`] = t('VALIDATION_ERROR_REQUIRED');
+      if (!qual.issuing_institution.trim()) errs[`qual_${idx}_institution`] = t('VALIDATION_ERROR_REQUIRED');
+      const year = qual.year_issued;
+      if (!year || year < 1900 || year > 2200) errs[`qual_${idx}_year`] = t('VALIDATION_ERROR_REQUIRED');
     });
 
     setFormErrors(errs);
@@ -328,6 +393,8 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
         setActiveTab('registrations');
       } else if (keys.some((k) => k.startsWith('spec_'))) {
         setActiveTab('specialties');
+      } else if (keys.some((k) => k.startsWith('qual_'))) {
+        setActiveTab('qualifications');
       }
       return;
     }
@@ -335,9 +402,9 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
     const payload: CreatePractitionerPayload = {
       full_name: fullName.trim(),
       social_name: socialName.trim() || undefined,
-      username: username.trim().toLowerCase(),
+      username: username.trim().toLowerCase() || undefined,
       cpf: Cpf.clean(cpf) || undefined,
-      cns: cns.trim() || undefined,
+      cns: Cns.clean(cns) || undefined,
       birth_date: birthDate,
       gender,
       email: email.trim().toLowerCase(),
@@ -347,11 +414,35 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
       digital_signature_type: digitalSignatureType,
       calendar_color: calendarColor,
       notes: notes.trim() || undefined,
-      login_password: !initialData ? 'Temp@1234' : undefined,
-      registrations,
-      specialties,
-      qualifications,
-      availability,
+      // The collections carry server-assigned ids and catalog-resolved names that the API
+      // rejects (additionalProperties: false), so each is mapped to its wire shape here.
+      registrations: registrations.map((reg) => ({
+        registration_type: reg.registration_type,
+        registration_number: reg.registration_number.trim(),
+        registration_state: reg.registration_state,
+        is_primary: reg.is_primary,
+      })),
+      specialties: specialties.map((spec) => ({
+        specialty_id: spec.specialty_id,
+        is_primary: spec.is_primary,
+        rqe_number: spec.rqe_number?.trim() || null,
+      })),
+      qualifications: qualifications.map((qual) => ({
+        qualification_type: qual.qualification_type,
+        degree_name: qual.degree_name.trim(),
+        issuing_institution: qual.issuing_institution.trim(),
+        // validateAll rejects a missing year, so this default only satisfies the type.
+        year_issued: qual.year_issued ?? new Date().getFullYear(),
+      })),
+      availability: availability
+        .filter((shift) => Boolean(shift.organization_unit_id))
+        .map((shift) => ({
+          organization_unit_id: shift.organization_unit_id as string,
+          day_of_week: shift.day_of_week,
+          start_time: shift.start_time,
+          end_time: shift.end_time,
+          slot_duration_minutes: shift.slot_duration_minutes,
+        })),
     };
 
     try {
@@ -412,7 +503,7 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
     setSpecialties((prev) => [
       ...prev,
       {
-        specialty_id: specialtiesCatalog[0]?.id || 'spec-001',
+        specialty_id: specialtiesCatalog[0]?.id ?? '',
         is_primary: prev.length === 0,
         rqe_number: '',
       },
@@ -447,8 +538,8 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
       {
         qualification_type: 'GRADUATION',
         degree_name: '',
-        institution_name: '',
-        completion_year: new Date().getFullYear(),
+        issuing_institution: '',
+        year_issued: new Date().getFullYear(),
       },
     ]);
   };
@@ -459,31 +550,6 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
 
   const updateQualification = (idx: number, patch: Partial<PractitionerQualificationItem>) => {
     setQualifications((prev) => {
-      const next = [...prev];
-      next[idx] = { ...next[idx], ...patch };
-      return next;
-    });
-  };
-
-  // Availability helpers
-  const addAvailabilitySlot = () => {
-    setAvailability((prev) => [
-      ...prev,
-      {
-        day_of_week: 1,
-        start_time: '08:00',
-        end_time: '12:00',
-        slot_duration_minutes: 30,
-      },
-    ]);
-  };
-
-  const removeAvailabilitySlot = (idx: number) => {
-    setAvailability((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const updateAvailabilitySlot = (idx: number, patch: Partial<PractitionerAvailabilityItem>) => {
-    setAvailability((prev) => {
       const next = [...prev];
       next[idx] = { ...next[idx], ...patch };
       return next;
@@ -508,99 +574,112 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
     { key: 'registrations', label: t('TAB_PRACTITIONER_REGISTRATIONS'), icon: '📜' },
     { key: 'specialties', label: t('TAB_PRACTITIONER_SPECIALTIES'), icon: '🩺' },
     { key: 'qualifications', label: t('TAB_PRACTITIONER_QUALIFICATIONS'), icon: '🎓' },
-    { key: 'availability', label: t('TAB_PRACTITIONER_AVAILABILITY'), icon: '📅' },
+    { key: 'availability', label: t('TAB_PRACTITIONER_AVAILABILITY'), icon: '🏥' },
   ];
 
   return (
     <div
+      ref={overlayRef}
       style={{
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(4px)',
+        backdropFilter: 'blur(3px)',
         display: 'flex',
-        alignItems: 'center',
+        // Centered until the first tab's position is measured; from then on the card
+        // is top-anchored at that same offset so switching tabs never re-centers it.
+        alignItems: topOffset === null ? 'center' : 'flex-start',
         justifyContent: 'center',
-        zIndex: 9999,
-        padding: 16,
+        zIndex: 1000,
+        padding: OVERLAY_PADDING,
       }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
+        ref={cardRef}
         style={{
           background: '#ffffff',
-          borderRadius: 14,
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+          borderRadius: 12,
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
           maxWidth: 1100,
-          maxHeight: '92vh',
+          maxHeight: '94vh',
+          // Anchors the card to the offset measured on the first tab; height stays
+          // content-driven (tab-dependent) and tall tabs scroll internally.
+          marginTop: topOffset ?? 0,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
           border: '1px solid #e2e8f0',
         }}
       >
-        {/* Modal Header */}
+        {/* ── Top Header: Title + Help Button + Close Button ── */}
         <div
           style={{
-            padding: '16px 24px',
+            padding: '14px 22px',
             borderBottom: '1px solid #e2e8f0',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: '#ffffff',
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#f8fafc',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div
+          <div>
+            <h3 style={{ margin: '0 0 2px', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
+              🩺 {initialData ? t('PRACTITIONERS_MODAL_EDIT_TITLE') : t('PRACTITIONERS_MODAL_CREATE_TITLE')}
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.76rem', color: '#64748b' }}>
+              {fullName || t('PRACTITIONER_MODAL_SUBTITLE')}
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('general')}
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                background: 'rgba(2, 132, 199, 0.25)',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
-                display: 'flex',
+                background: '#f0f9ff',
+                color: '#0284c7',
+                border: '1px solid #bae6fd',
+                borderRadius: 6,
+                padding: '4px 9px',
+                fontSize: '0.74rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.25rem',
+                gap: 4,
+              }}
+              title="Ir para aba de identificação"
+            >
+              <span>❓</span>
+              <span>Ajuda</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '1.2rem',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: 4,
+                borderRadius: 6,
               }}
             >
-              🩺
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>
-                {initialData ? t('PRACTITIONERS_MODAL_EDIT_TITLE') : t('PRACTITIONERS_MODAL_CREATE_TITLE')}
-              </h2>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2 }}>
-                {fullName || t('PRACTITIONER_MODAL_SUBTITLE')}
-              </div>
-            </div>
+              ✕
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#94a3b8',
-              fontSize: '1.25rem',
-              cursor: 'pointer',
-              padding: 4,
-              borderRadius: 6,
-            }}
-          >
-            ✕
-          </button>
         </div>
 
-        {/* Tab Navigation - Full width, equal distribution, no horizontal scroll */}
+        {/* ── Tab Navigation ── */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            padding: '10px 20px',
-            background: '#f8fafc',
+            gap: 4,
+            padding: '8px 22px',
+            background: '#ffffff',
             borderBottom: '1px solid #e2e8f0',
             flexWrap: 'nowrap',
           }}
@@ -614,21 +693,22 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                 onClick={() => setActiveTab(tab.key)}
                 style={{
                   flex: 1,
-                  height: 36,
-                  padding: '0 12px',
-                  borderRadius: 8,
+                  height: 34,
+                  padding: '0 10px',
+                  borderRadius: 6,
                   border: isCurrent ? '1px solid #0284c7' : '1px solid transparent',
-                  background: isCurrent ? '#0284c7' : 'transparent',
-                  color: isCurrent ? '#ffffff' : '#64748b',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
+                  background: isCurrent ? '#eff6ff' : 'transparent',
+                  color: isCurrent ? '#0284c7' : '#64748b',
+                  fontSize: '0.80rem',
+                  fontWeight: isCurrent ? 700 : 500,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
+                  gap: 5,
                   whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
+                  transition: 'all 0.12s ease',
+                  borderBottom: isCurrent ? '2px solid #0284c7' : '2px solid transparent',
                 }}
               >
                 <span>{tab.icon}</span>
@@ -639,11 +719,19 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
         </div>
 
         {/* Modal Form Body */}
-        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column' }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        >
+          {/* Scrollable tab content — resets to top on tab change */}
+          <div
+            ref={formRef}
+            style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}
+          >
           {/* Tab 1: Identification */}
           {activeTab === 'general' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr', gap: 14, alignItems: 'flex-start' }}>
                 <div>
                   <FieldLabelWithTooltip label={t('FIELD_FULL_NAME')} required />
                   <input
@@ -651,24 +739,25 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                     value={fullName}
                     onBlur={() => handleBlur('fullName')}
                     onChange={(e) => handleFieldChange('fullName', e.target.value, setFullName)}
-                    placeholder={t('PRACTITIONER_FIELD_NAME_PLACEHOLDER')}
                     style={{ ...inputStyle, borderColor: formErrors.fullName ? '#ef4444' : '#cbd5e1' }}
                   />
                   {formErrors.fullName && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.fullName}</span>}
                 </div>
                 <div>
-                  <FieldLabelWithTooltip label={t('FIELD_SOCIAL_NAME')} />
+                  <FieldLabelWithTooltip
+                    label={t('FIELD_SOCIAL_NAME')}
+                    tooltip={t('FIELD_SOCIAL_NAME_TOOLTIP')}
+                  />
                   <input
                     type="text"
                     value={socialName}
                     onChange={(e) => setSocialName(e.target.value)}
-                    placeholder={t('PRACTITIONER_FIELD_SOCIAL_NAME_PLACEHOLDER')}
                     style={inputStyle}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, alignItems: 'flex-start' }}>
                 <div>
                   <FieldLabelWithTooltip label={t('FIELD_CPF')} required tooltip={t('FIELD_REGISTRY_CPF_TOOLTIP')} />
                   <input
@@ -688,9 +777,9 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                     type="text"
                     value={cns}
                     onBlur={() => handleBlur('cns')}
-                    onChange={(e) => handleFieldChange('cns', e.target.value.replace(/\D/g, '').slice(0, 15), setCns)}
-                    placeholder="700000000000000"
-                    maxLength={15}
+                    onChange={(e) => handleFieldChange('cns', Cns.format(e.target.value), setCns)}
+                    placeholder="000 0000 0000 0000"
+                    maxLength={18}
                     style={{ ...inputStyle, fontFamily: 'monospace', borderColor: formErrors.cns ? '#ef4444' : '#cbd5e1' }}
                   />
                   {formErrors.cns && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.cns}</span>}
@@ -716,15 +805,18 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: 14, alignItems: 'flex-start' }}>
                 <div>
                   <FieldLabelWithTooltip label={t('FIELD_USERNAME')} required tooltip={t('FIELD_USERNAME_TOOLTIP')} />
                   <input
                     type="text"
                     value={username}
                     onBlur={() => handleBlur('username')}
-                    onChange={(e) => handleFieldChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''), setUsername)}
-                    placeholder="ex: roberto.mendes"
+                    onChange={(e) => {
+                      // Typing takes ownership of the field, so the name-based suggestion stops.
+                      setUsernameEdited(true);
+                      handleFieldChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''), setUsername);
+                    }}
                     style={{ ...inputStyle, borderColor: formErrors.username ? '#ef4444' : '#cbd5e1' }}
                   />
                   {formErrors.username && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.username}</span>}
@@ -736,7 +828,6 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                     value={email}
                     onBlur={() => handleBlur('email')}
                     onChange={(e) => handleFieldChange('email', e.target.value, setEmail)}
-                    placeholder="medico@openclinic.local"
                     style={{ ...inputStyle, borderColor: formErrors.email ? '#ef4444' : '#cbd5e1' }}
                   />
                   {formErrors.email && <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors.email}</span>}
@@ -785,7 +876,6 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t('FIELD_NOTES_PRACTITIONER_PLACEHOLDER')}
                   rows={3}
                   style={{ ...inputStyle, height: 'auto', padding: '8px 12px' }}
                 />
@@ -1039,14 +1129,20 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                             specialty_name: found?.name,
                           });
                         }}
-                        style={inputStyle}
+                        style={{ ...inputStyle, borderColor: formErrors[`spec_${idx}_id`] ? '#ef4444' : '#cbd5e1' }}
                       >
+                        {/* A row can only be seeded once the catalog has loaded, so an empty
+                            value needs a matching option or the select would show a stale one. */}
+                        {!spec.specialty_id && <option value="">{t('FIELD_LABEL_SPECIALTY')}</option>}
                         {specialtiesCatalog.map((cat) => (
                           <option key={cat.id} value={cat.id}>
                             {cat.name} ({cat.cbo_code})
                           </option>
                         ))}
                       </select>
+                      {formErrors[`spec_${idx}_id`] && (
+                        <span style={{ color: '#ef4444', fontSize: '0.72rem', marginTop: 3, display: 'block' }}>{formErrors[`spec_${idx}_id`]}</span>
+                      )}
                     </div>
 
                     <div>
@@ -1133,16 +1229,19 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                   {t('PRACTITIONERS_NO_QUALIFICATIONS')}
                 </div>
               ) : (
-                qualifications.map((qual, idx) => (
+                qualifications.map((qual, idx) => {
+                  const rowError = formErrors[`qual_${idx}_degree`] || formErrors[`qual_${idx}_institution`]
+                    || formErrors[`qual_${idx}_year`];
+                  return (
                   <div
                     key={idx}
                     style={{
                       background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      border: `1px solid ${rowError ? '#ef4444' : '#e2e8f0'}`,
                       borderRadius: 10,
                       padding: 14,
                       display: 'grid',
-                      gridTemplateColumns: '130px 2fr 1.5fr 90px 40px',
+                      gridTemplateColumns: '130px 2fr 1.5fr 116px 40px',
                       gap: 10,
                       alignItems: 'center',
                     }}
@@ -1169,7 +1268,6 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                         type="text"
                         value={qual.degree_name}
                         onChange={(e) => updateQualification(idx, { degree_name: e.target.value })}
-                        placeholder={t('PRACTITIONER_FIELD_DEGREE_PLACEHOLDER')}
                         style={inputStyle}
                       />
                     </div>
@@ -1178,9 +1276,8 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                       <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_INSTITUTION')}</label>
                       <input
                         type="text"
-                        value={qual.institution_name}
-                        onChange={(e) => updateQualification(idx, { institution_name: e.target.value })}
-                        placeholder={t('PRACTITIONER_FIELD_INSTITUTION_PLACEHOLDER')}
+                        value={qual.issuing_institution}
+                        onChange={(e) => updateQualification(idx, { issuing_institution: e.target.value })}
                         style={inputStyle}
                       />
                     </div>
@@ -1189,9 +1286,8 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                       <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_YEAR')}</label>
                       <input
                         type="number"
-                        value={qual.completion_year || ''}
-                        onChange={(e) => updateQualification(idx, { completion_year: Number(e.target.value) || null })}
-                        placeholder="2012"
+                        value={qual.year_issued || ''}
+                        onChange={(e) => updateQualification(idx, { year_issued: Number(e.target.value) || null })}
                         style={inputStyle}
                       />
                     </div>
@@ -1213,135 +1309,36 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
                     >
                       ✕
                     </button>
+                    {rowError && (
+                      <span style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '0.72rem' }}>{rowError}</span>
+                    )}
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
 
-          {/* Tab 5: Clinical Schedule & Availability */}
+          {/* Tab 5: Organization Units & Schedule */}
           {activeTab === 'availability' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.90rem', color: '#0f172a' }}>{t('TAB_PRACTITIONER_AVAILABILITY')}</h4>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('PRACTITIONERS_AVAILABILITY_HINT')}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={addAvailabilitySlot}
-                  style={{
-                    height: 32,
-                    padding: '0 12px',
-                    borderRadius: 6,
-                    background: '#0284c7',
-                    color: '#ffffff',
-                    border: 'none',
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  ➕ {t('REGISTRIES_BTN_ADD_SHIFT')}
-                </button>
-              </div>
-
-              {availability.length === 0 ? (
-                <div style={{ padding: 24, textAlign: 'center', background: '#f8fafc', borderRadius: 8, border: '1px dashed #cbd5e1', color: '#64748b' }}>
-                  {t('PRACTITIONERS_NO_AVAILABILITY')}
-                </div>
-              ) : (
-                availability.map((avail, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 10,
-                      padding: 14,
-                      display: 'grid',
-                      gridTemplateColumns: '180px 110px 110px 140px 40px',
-                      gap: 10,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_DAY_OF_WEEK')}</label>
-                      <select
-                        value={avail.day_of_week}
-                        onChange={(e) => updateAvailabilitySlot(idx, { day_of_week: Number(e.target.value) })}
-                        style={inputStyle}
-                      >
-                        {DAYS_OF_WEEK.map((d) => (
-                          <option key={d.id} value={d.id}>{t(d.labelKey)}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_START_TIME')}</label>
-                      <input
-                        type="time"
-                        value={avail.start_time}
-                        onChange={(e) => updateAvailabilitySlot(idx, { start_time: e.target.value })}
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_END_TIME')}</label>
-                      <input
-                        type="time"
-                        value={avail.end_time}
-                        onChange={(e) => updateAvailabilitySlot(idx, { end_time: e.target.value })}
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 600 }}>{t('FIELD_LABEL_SLOT_DURATION')}</label>
-                      <select
-                        value={avail.slot_duration_minutes}
-                        onChange={(e) => updateAvailabilitySlot(idx, { slot_duration_minutes: Number(e.target.value) })}
-                        style={inputStyle}
-                      >
-                        <option value={15}>{t('FIELD_SLOT_DURATION_MINUTES', { minutes: 15 })}</option>
-                        <option value={20}>{t('FIELD_SLOT_DURATION_MINUTES', { minutes: 20 })}</option>
-                        <option value={30}>{t('FIELD_SLOT_DURATION_MINUTES', { minutes: 30 })}</option>
-                        <option value={45}>{t('FIELD_SLOT_DURATION_MINUTES', { minutes: 45 })}</option>
-                        <option value={60}>{t('FIELD_SLOT_DURATION_MINUTES', { minutes: 60 })}</option>
-                      </select>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeAvailabilitySlot(idx)}
-                      style={{
-                        background: '#fee2e2',
-                        color: '#dc2626',
-                        border: '1px solid #fecaca',
-                        borderRadius: 6,
-                        height: 36,
-                        marginTop: 14,
-                        cursor: 'pointer',
-                        fontWeight: 700,
-                      }}
-                      title={t('REGISTRIES_BTN_REMOVE')}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+            <PractitionerUnitsScheduleTab
+              units={units}
+              unitsLoading={unitsLoading}
+              unitsError={unitsError}
+              availability={availability}
+              onChange={setAvailability}
+            />
           )}
 
-          {/* Modal Footer with subtle hover tooltip on Save */}
+          </div>
+
+          {/* Modal Footer — outside scroll, always visible at bottom */}
           <div
             style={{
-              marginTop: 24,
-              paddingTop: 16,
+              flexShrink: 0,
+              padding: '14px 24px',
               borderTop: '1px solid #e2e8f0',
+              background: '#ffffff',
               display: 'flex',
               justifyContent: 'flex-end',
               alignItems: 'center',
@@ -1420,3 +1417,7 @@ export const PractitionerDetailModal: React.FC<PractitionerDetailModalProps> = (
     </div>
   );
 };
+
+
+
+

@@ -44,7 +44,7 @@ export function registerRoomRoutes(
       tags: ['Rooms'],
       security: SecurityBearer,
       summary: 'List rooms',
-      description: 'Lists non-deleted rooms in the authenticated tenant. Requires menu_sys_institution READ permission.',
+      description: 'Lists non-deleted rooms in the authenticated tenant. Requires registries_organizations READ permission.',
       response: { ...roomErrors, 200: {
         type: 'object', properties: { items: { type: 'array', items: RoomSchema }, total: { type: 'integer' } },
       } },
@@ -68,7 +68,7 @@ export function registerRoomRoutes(
       tags: ['Rooms'],
       security: SecurityBearer,
       summary: 'Create room',
-      description: 'Creates a room in the authenticated tenant. Requires menu_sys_institution WRITE permission. tenant_id is assigned by the server.',
+      description: 'Creates a room in the authenticated tenant. Requires registries_organizations WRITE permission. tenant_id is assigned by the server.',
       response: { ...roomErrors, 201: RoomSchema },
       body: { type: 'object', required: ['name', 'unit_id', 'is_schedulable'], additionalProperties: false, properties },
     },
@@ -76,7 +76,7 @@ export function registerRoomRoutes(
 
   app.get<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Rooms'], params, security: SecurityBearer, summary: 'Get room',
-      description: 'Requires menu_sys_institution READ permission. Deleted rooms and rooms in other tenants return 404.',
+      description: 'Requires registries_organizations READ permission. Deleted rooms and rooms in other tenants return 404.',
       response: { ...roomErrors, 200: RoomSchema } },
   }, async (request, reply) => {
     const room = await repository(request).getById(request.params.id);
@@ -89,7 +89,7 @@ export function registerRoomRoutes(
       tags: ['Rooms'],
       security: SecurityBearer,
       summary: 'Update room',
-      description: 'Updates supplied fields; omitted fields remain unchanged. Requires menu_sys_institution WRITE permission.',
+      description: 'Updates supplied fields; omitted fields remain unchanged. Requires registries_organizations WRITE permission.',
       response: { ...roomErrors, 200: RoomSchema },
       params,
       body: { type: 'object', minProperties: 1, additionalProperties: false, properties },
@@ -101,7 +101,7 @@ export function registerRoomRoutes(
 
   app.delete<{ Params: { id: string } }>(`${basePath}/:id`, {
     schema: { tags: ['Rooms'], params, security: SecurityBearer, summary: 'Delete room',
-      description: 'Soft-deletes a room in the authenticated tenant. Requires menu_sys_institution DELETE permission.',
+      description: 'Soft-deletes a room in the authenticated tenant. Requires registries_organizations DELETE permission.',
       response: { ...roomErrors, 204: { type: 'null', description: 'Room deleted; empty response' } } },
   }, async (request, reply) => {
     if (!await repository(request).softDelete(request.params.id)) return reply.status(404).send(notFound);

@@ -12,7 +12,7 @@ export const AppointmentSchema = { type: 'object', properties: {
 const { $id: _id, ...problem } = ProblemDetailsSchema;
 export const appointmentErrors = {
   400: { ...problem, description: 'Invalid request' }, 401: { ...problem, description: 'Authentication required' },
-  403: { ...problem, description: 'Tenant and op_schedule permission required' },
+  403: { ...problem, description: 'Tenant and attendance_schedule permission required' },
   404: { type: 'object', properties: { statusCode: { type: 'integer' }, error: { type: 'string' }, message: { type: 'string' } } },
   409: { ...problem, description: 'Resource conflict, unavailable period or invalid status transition' },
   422: { ...problem, description: 'Invalid appointment or related resource' }, 500: { ...problem, description: 'Internal server error' },

@@ -43,7 +43,7 @@ describe('ScheduleBlock application integration', () => {
     const response = await app.inject({ method, url: '/api/v1/business/blocks' + suffix, headers,
       ...(['POST', 'PUT'].includes(method) ? { payload: { practitioner_id: 'p-1', starts_at: '2026-10-01T08:00:00Z', ends_at: '2026-10-01T09:00:00Z', timezone: 'UTC' } } : {}) });
     expect(response.statusCode).toBe(403);
-    expect(permission).toHaveBeenCalledWith('user-1', 'op_schedule', action);
+    expect(permission).toHaveBeenCalledWith('user-1', 'attendance_schedule', action);
     expect(uow.scheduleBlocksForTenant).not.toHaveBeenCalled();
   });
   it('registers all six endpoints in the served OpenAPI document', async () => {

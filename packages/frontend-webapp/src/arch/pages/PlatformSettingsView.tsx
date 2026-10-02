@@ -226,8 +226,7 @@ export const PlatformSettingsView: React.FC = () => {
       setMinPasswordLength(Math.max(8, app.defaultMinPasswordLength ?? 8));
       setMfaEnabled(Boolean(app.defaultMfaEnabled));
       setResetTokenTtl(app.defaultPasswordResetTokenTtlHours ?? 24);
-      const rawWithDirect = rawApp as PlatformApplicationData & { allow_direct_user_creation?: boolean };
-      setAllowDirectUserCreation(app.allowDirectUserCreation ?? rawWithDirect.allow_direct_user_creation ?? true);
+      setAllowDirectUserCreation(app.allowDirectUserCreation ?? true);
 
       // Load granular password complexity requirements
       const extra = (app.defaultExtraSettings as Record<string, any>) || {};
