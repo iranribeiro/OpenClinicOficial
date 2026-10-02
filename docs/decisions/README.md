@@ -18,6 +18,7 @@ A ideia é simples: quem chega ao projeto seis meses depois consegue entender **
 | [0008](./0008-contrato-antes-ou-depois-do-codigo.md) | Contrato da API antes ou depois do código | Aceita — código primeiro |
 | [0009](./0009-react-e-vite-no-front-end.md) | React com Vite no front-end | Aceita |
 | [0010](./0010-monolito-modular.md) | Monolito modular | Aceita |
+| [0011](./0011-unicidade-de-identidade-global.md) | Unicidade de identidade global | Aceita |
 
 Esta tabela é o único lugar que declara a situação de cada decisão — o resto da documentação aponta para cá em vez de repetir.
 

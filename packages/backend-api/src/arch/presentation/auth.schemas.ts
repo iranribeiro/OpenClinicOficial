@@ -1,5 +1,17 @@
 import { z } from 'zod';
-import { ErrorCode, getErrorMessage, UserRole, Cpf } from '@openclinic/core';
+import { ErrorCode, getErrorMessage, UserRole, Cpf, Username } from '@openclinic/core';
+
+/**
+ * Validated by the Username value object instead of a bare length check, because the rule that
+ * matters is not the length: a username must start with a letter. `getByIdentifier` resolves an
+ * account by `email OR username OR cpf`, so an all-digit username could shadow a CPF at login.
+ * Normalizing here keeps the stored value, the collision lookups and the unique index all
+ * comparing the same canonical form.
+ */
+const usernameField = z
+  .string()
+  .transform((value) => Username.clean(value))
+  .refine((value) => Username.isValid(value), { message: getErrorMessage(ErrorCode.VALIDATION_ERROR) });
 
 export const LoginRequestSchema = z.object({
   identifier: z.string().min(1, getErrorMessage(ErrorCode.REQUIRED_FIELDS_MISSING)),
@@ -8,7 +20,7 @@ export const LoginRequestSchema = z.object({
 
 export const RegisterRequestSchema = z.object({
   email: z.string().email(getErrorMessage(ErrorCode.VALIDATION_ERROR)),
-  username: z.string().min(3, getErrorMessage(ErrorCode.VALIDATION_ERROR)).max(50),
+  username: usernameField,
   password: z.string().min(8, getErrorMessage(ErrorCode.PASSWORD_TOO_SHORT)),
   full_name: z.string().min(1, getErrorMessage(ErrorCode.REQUIRED_FIELDS_MISSING)),
   display_name: z.string().optional(),
@@ -34,7 +46,7 @@ export const ResetPasswordRequestSchema = z.object({
 
 export const CreateUserRequestSchema = z.object({
   email: z.string().email(getErrorMessage(ErrorCode.VALIDATION_ERROR)),
-  username: z.string().min(3, getErrorMessage(ErrorCode.VALIDATION_ERROR)),
+  username: usernameField,
   cpf: z
     .string()
     .transform((val) => (val ? Cpf.clean(val) : val))
@@ -54,7 +66,7 @@ export const CreateUserRequestSchema = z.object({
 
 export const UpdateUserRequestSchema = z.object({
   email: z.string().email(getErrorMessage(ErrorCode.VALIDATION_ERROR)),
-  username: z.string().min(3, getErrorMessage(ErrorCode.VALIDATION_ERROR)),
+  username: usernameField,
   cpf: z
     .string()
     .transform((val) => (val ? Cpf.clean(val) : val))

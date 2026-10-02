@@ -5,11 +5,13 @@ import {
   hashPassword,
   BOOTSTRAP_DEFAULTS,
   UserRole,
+  Username,
   AuditAction,
   AuditResource,
   AuditStatus,
 } from '@openclinic/core';
 import { getDatabaseConfig } from '../utils/database-connection.js';
+import { checkUsernameInput, USERNAME_RULE } from '../utils/username-input.js';
 
 export interface UserCreateAdminOptions {
   nonInteractive?: boolean;
@@ -42,6 +44,15 @@ export async function ensureDefaultSuperAdmin(customDbUrl?: string): Promise<{ c
     const defaultUsername = BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_USERNAME;
     const defaultEmail = BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_EMAIL;
 
+    // One gate for both writes below: the UPDATE that migrates a legacy 'superadmin' and the INSERT
+    // that creates the OWNER. Both go through raw SQL, and this is the highest-privilege account in
+    // the system -- an edit to the constant should fail loudly here rather than quietly create an
+    // OWNER whose username could shadow a CPF at login.
+    const resolvedUsername = checkUsernameInput(defaultUsername);
+    if (!resolvedUsername.valid) {
+      throw new Error(`BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_USERNAME is not a valid username: ${resolvedUsername.reason}`);
+    }
+
     if (existingOwner) {
       if (!existingOwner.cpf || existingOwner.username === 'superadmin') {
         await sql`
@@ -66,7 +77,7 @@ export async function ensureDefaultSuperAdmin(customDbUrl?: string): Promise<{ c
       LIMIT 1
     `;
 
-    const username = defaultUsername;
+    const username = resolvedUsername.username;
     const email = defaultEmail;
     const fullName = BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_FULL_NAME;
     const defaultPassword = process.env['DEFAULT_ADMIN_PASSWORD'] ?? BOOTSTRAP_DEFAULTS.DEV_DEFAULT_PASSWORD;
@@ -140,7 +151,7 @@ export async function userCreateAdmin(options: UserCreateAdminOptions = {}): Pro
   } else {
     const answers = await inquirer.prompt([
       { type: 'input', name: 'email', message: 'Owner email:', default: BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_EMAIL, validate: (v: string) => v.includes('@') || 'Invalid email' },
-      { type: 'input', name: 'username', message: 'Owner username:', default: BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_USERNAME, validate: (v: string) => v.length >= 3 || 'Min 3 chars' },
+      { type: 'input', name: 'username', message: 'Owner username:', default: BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_USERNAME, validate: (v: string) => Username.isValid(v) || USERNAME_RULE },
       { type: 'input', name: 'full_name', message: 'Full name:', default: BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_FULL_NAME },
       { type: 'password', name: 'password', message: 'Password:', mask: '*', validate: (v: string) => v.length >= 8 || 'Min 8 chars' },
       { type: 'password', name: 'confirm', message: 'Confirm password:', mask: '*' },
@@ -156,6 +167,16 @@ export async function userCreateAdmin(options: UserCreateAdminOptions = {}): Pro
     fullName = answers.full_name;
     password = answers.password;
   }
+
+  // One gate for both paths. The interactive prompt validates while typing, but a non-interactive
+  // run never sees that prompt -- and this command inserts with raw SQL, so nothing downstream
+  // would catch a bad username before it became a login.
+  const resolvedUsername = checkUsernameInput(username);
+  if (!resolvedUsername.valid) {
+    console.error(`Invalid username: ${resolvedUsername.reason}.`);
+    process.exit(1);
+  }
+  username = resolvedUsername.username;
 
   const sql = postgres({
     host: config.host,
@@ -183,7 +204,7 @@ export async function userCreateAdmin(options: UserCreateAdminOptions = {}): Pro
         role, is_active, is_tenant_owner, job_title, tenant_id, cpf
       )
       VALUES (
-        ${userId}, ${email!.trim().toLowerCase()}, ${username!.trim()}, ${fullName!.trim()}, ${fullName!.trim()},
+        ${userId}, ${email!.trim().toLowerCase()}, ${username}, ${fullName!.trim()}, ${fullName!.trim()},
         ${hashedPassword}, ${UserRole.OWNER}, true, true, ${BOOTSTRAP_DEFAULTS.DEFAULT_OWNER_JOB_TITLE}, ${defaultTenant?.id ?? null}, ${defaultCpf}
       )
       RETURNING id, email, username, cpf

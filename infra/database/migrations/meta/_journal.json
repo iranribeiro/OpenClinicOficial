@@ -64,6 +64,20 @@
       "when": 1790710000000,
       "tag": "0008_standardize_resource_codes_and_routes",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790726400000,
+      "tag": "0009_practitioner_staff_persistence",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790858835356,
+      "tag": "0010_global_identity_uniqueness",
+      "breakpoints": true
     }
   ]
 }

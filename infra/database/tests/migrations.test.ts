@@ -121,6 +121,10 @@ test('appointment migration preserves legacy appointments without inventing reso
     assert.equal(row!.procedure_id, null);
     assert.equal(row!.unit_id, null);
     assert.equal(row!.source_channel, 'LEGACY');
+    // The repository below runs application code, which is written against the current schema: on a
+    // database left at 0006 its generated SELECT would name columns that only 0007 adds. The legacy
+    // rows above are already asserted, and nothing past 0006 touches app_appointments or them.
+    for (const migration of migrations.slice(target + 1)) for (const statement of migration.sql) await sql.unsafe(statement);
     await sql`INSERT INTO app_organizations (id, tenant_id, legal_name, trade_name) VALUES ('legacy-org', 'legacy-appt', 'A', 'A')`;
     await sql`INSERT INTO app_organization_units (id, tenant_id, organization_id, name) VALUES ('legacy-unit', 'legacy-appt', 'legacy-org', 'Unit')`;
     await sql`INSERT INTO app_procedures (id, tenant_id, name, estimated_duration_minutes) VALUES ('legacy-procedure', 'legacy-appt', 'Procedure', 30)`;
@@ -151,7 +155,7 @@ test('fresh install, reference catalog and repeated migration preserve customize
   await isolated(async (url, sql) => {
     assert.equal((await migrateDatabase(url)).length, loadMigrations().length);
     const [tables] = await sql`SELECT count(*)::int AS count FROM pg_tables WHERE schemaname = 'public'`;
-    assert.equal(tables!.count, 31);
+    assert.equal(tables!.count, 32);
     const [users] = await sql`SELECT count(*)::int AS count FROM iam_users`;
     assert.equal(users!.count, 0);
     const [bindings] = await sql`SELECT count(*)::int AS count FROM iam_groups g JOIN sys_tenants t ON t.id = g.tenant_id WHERE t.slug = 'acme-organization'`;

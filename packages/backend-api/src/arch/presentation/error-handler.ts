@@ -29,6 +29,23 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     return;
   }
 
+  // A unique violation that reaches here means two writers raced past the application-level
+  // uniqueness checks. The indexes are the final arbiter, so surface the conflict they enforced
+  // instead of a generic failure. The constraint name is deliberately not echoed: it identifies
+  // the field, and this route can be reached by an admin who must not learn what another tenant
+  // holds. The catalog message stays generic for the same reason.
+  if (errObj['code'] === '23505') {
+    reply.status(409).send({
+      type: `urn:openclinic:error:${ErrorCode.ALREADY_EXISTS.toLowerCase().replace(/_/g, '-')}`,
+      title: 'EntityAlreadyExistsError',
+      status: 409,
+      code: ErrorCode.ALREADY_EXISTS,
+      detail: getErrorMessage(ErrorCode.ALREADY_EXISTS, locale),
+      instance: request.url,
+    });
+    return;
+  }
+
   // Handle Fastify JSON parsing errors, bad content, or client 4xx errors
   const isSyntaxOrParseError = error.name === 'SyntaxError' || errObj.code === 'FST_ERR_CTP_INVALID_CONTENT';
   const rawStatus = typeof errObj.statusCode === 'number' ? errObj.statusCode : null;

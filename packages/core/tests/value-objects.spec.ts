@@ -292,6 +292,7 @@ describe('Value Objects Suite', () => {
       expect(Username.isValid('dr.silva')).toBe(true);
       expect(Username.isValid('  DR.SILVA  ')).toBe(true);
       expect(Username.isValid('nurse_ana-123')).toBe(true);
+      expect(Username.isValid('a1b2')).toBe(true); // digits allowed after the leading letter
 
       const user = Username.create('  Dr.Silva  ');
       expect(user.value).toBe('dr.silva');
@@ -307,6 +308,16 @@ describe('Value Objects Suite', () => {
       expect(Username.isValid('dr silva')).toBe(false); // space not allowed
       expect(Username.isValid('dr@silva')).toBe(false); // special characters
       expect(() => Username.create('ab')).toThrow();
+    });
+
+    it('should require a leading letter, so no username can shadow a CPF', () => {
+      // getByIdentifier resolves an account by email OR username OR cpf, so an all-digit
+      // username would be indistinguishable from somebody's CPF at login.
+      expect(Username.isValid('12345678901')).toBe(false); // eleven digits: CPF shape
+      expect(Username.isValid('123')).toBe(false); // all digits
+      expect(Username.isValid('1abc')).toBe(false); // leading digit
+      expect(Username.isValid('_abc')).toBe(false); // leading separator
+      expect(Username.isValid('abc123')).toBe(true); // digits are fine after the letter
     });
   });
 

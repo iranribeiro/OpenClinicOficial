@@ -127,9 +127,15 @@ export const iamUsers = pgTable('iam_users', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deleted_at: timestamp('deleted_at', { withTimezone: true }),
 }, (table) => [
-  uniqueIndex('idx_iam_users_email_tenant').on(table.email, table.tenant_id),
-  uniqueIndex('idx_iam_users_username_tenant').on(table.username, table.tenant_id),
-  index('idx_iam_users_cpf').on(table.cpf),
+  // Identity is global, not per-tenant: login resolves an account from the identifier alone, so a
+  // second row answering to the same email, username or CPF would make authentication ambiguous.
+  // Case-insensitive because every read path lowercases its input; partial on deleted_at so a
+  // soft-deleted account releases its identifier instead of blocking it forever.
+  uniqueIndex('idx_iam_users_email_global').on(sql`lower(${table.email})`).where(sql`${table.deleted_at} is null`),
+  uniqueIndex('idx_iam_users_username_global').on(sql`lower(${table.username})`).where(sql`${table.deleted_at} is null`),
+  uniqueIndex('idx_iam_users_cpf_global').on(table.cpf).where(sql`${table.deleted_at} is null and ${table.cpf} is not null`),
+  /** Backs exact-match username lookups, which the functional index above cannot answer. */
+  index('idx_iam_users_username_lookup').on(table.username),
   index('idx_iam_users_role').on(table.role),
   index('idx_iam_users_tenant_id').on(table.tenant_id),
   index('idx_iam_users_deleted_at').on(table.deleted_at),
@@ -372,6 +378,22 @@ export const appPractitioners = pgTable('app_practitioners', {
   phone: varchar('phone', { length: 20 }),
   email: varchar('email', { length: 255 }),
   is_clinical_staff: boolean('is_clinical_staff').notNull().default(false),
+  birth_date: date('birth_date'),
+  gender: varchar('gender', { length: 20 }),
+  social_name: varchar('social_name', { length: 255 }),
+  cns: varchar('cns', { length: 15 }),
+  photo_url: varchar('photo_url', { length: 500 }),
+  street: varchar('street', { length: 255 }),
+  number: varchar('number', { length: 20 }),
+  complement: varchar('complement', { length: 100 }),
+  neighborhood: varchar('neighborhood', { length: 100 }),
+  city: varchar('city', { length: 100 }),
+  state: varchar('state', { length: 2 }),
+  postal_code: varchar('postal_code', { length: 20 }),
+  is_technical_lead: boolean('is_technical_lead').notNull().default(false),
+  digital_signature_type: varchar('digital_signature_type', { length: 50 }).notNull().default('NONE'),
+  calendar_color: varchar('calendar_color', { length: 20 }),
+  notes: text('notes'),
   is_active: boolean('is_active').notNull().default(true),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -620,6 +642,8 @@ export const appPractitionerRegistrations = pgTable('app_practitioner_registrati
   registration_type: varchar('registration_type', { length: 20 }).notNull(),
   registration_number: varchar('registration_number', { length: 50 }).notNull(),
   registration_state: varchar('registration_state', { length: 2 }),
+  /** Marks the council that defines practitioner_type and the denormalized council_* columns. */
+  is_primary: boolean('is_primary').notNull().default(false),
   issuing_body: varchar('issuing_body', { length: 100 }),
   issue_date: date('issue_date'),
   expiration_date: date('expiration_date'),
@@ -632,6 +656,7 @@ export const appPractitionerRegistrations = pgTable('app_practitioner_registrati
   index('idx_app_pract_reg_tenant').on(table.tenant_id),
   index('idx_app_pract_reg_practitioner').on(table.practitioner_id),
   index('idx_app_pract_reg_number').on(table.registration_number, table.registration_type, table.registration_state),
+  index('idx_app_pract_reg_primary').on(table.practitioner_id, table.is_primary),
   foreignKey({ name: 'fk_app_pract_reg_tenant', columns: [table.tenant_id], foreignColumns: [sysTenants.id] }).onDelete('restrict'),
   foreignKey({ name: 'fk_app_pract_reg_practitioner', columns: [table.practitioner_id], foreignColumns: [appPractitioners.id] }).onDelete('cascade'),
 ]);
@@ -687,7 +712,8 @@ export const appPractitionerAvailability = pgTable('app_practitioner_availabilit
   tenant_id: varchar('tenant_id', { length: 36 }).notNull(),
   practitioner_id: varchar('practitioner_id', { length: 36 }).notNull(),
   organization_unit_id: varchar('organization_unit_id', { length: 36 }),
-  day_of_week: varchar('day_of_week', { length: 15 }).notNull(),
+  /** Sunday is 0 — same convention as app_availabilities.day_of_week. */
+  day_of_week: integer('day_of_week').notNull(),
   start_time: varchar('start_time', { length: 10 }).notNull(),
   end_time: varchar('end_time', { length: 10 }).notNull(),
   lunch_start: varchar('lunch_start', { length: 10 }),
@@ -700,6 +726,8 @@ export const appPractitionerAvailability = pgTable('app_practitioner_availabilit
 }, (table) => [
   index('idx_app_pract_avail_tenant').on(table.tenant_id),
   index('idx_app_pract_avail_practitioner').on(table.practitioner_id),
+  index('idx_app_pract_avail_unit').on(table.organization_unit_id),
+  check('app_practitioner_availability_day_check', sql`${table.day_of_week} BETWEEN 0 AND 6`),
   foreignKey({ name: 'fk_app_pract_avail_tenant', columns: [table.tenant_id], foreignColumns: [sysTenants.id] }).onDelete('restrict'),
   foreignKey({ name: 'fk_app_pract_avail_practitioner', columns: [table.practitioner_id], foreignColumns: [appPractitioners.id] }).onDelete('cascade'),
   foreignKey({ name: 'fk_app_pract_avail_unit', columns: [table.organization_unit_id], foreignColumns: [appOrganizationUnits.id] }).onDelete('set null'),
@@ -762,4 +790,21 @@ export const appStaffQualifications = pgTable('app_staff_qualifications', {
   index('idx_app_staff_qual_staff').on(table.staff_id),
   foreignKey({ name: 'fk_app_staff_qual_tenant', columns: [table.tenant_id], foreignColumns: [sysTenants.id] }).onDelete('restrict'),
   foreignKey({ name: 'fk_app_staff_qual_staff', columns: [table.staff_id], foreignColumns: [appStaff.id] }).onDelete('cascade'),
+]);
+
+export const appStaffUnits = pgTable('app_staff_units', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  tenant_id: varchar('tenant_id', { length: 36 }).notNull(),
+  staff_id: varchar('staff_id', { length: 36 }).notNull(),
+  organization_unit_id: varchar('organization_unit_id', { length: 36 }).notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('uq_app_staff_units_staff_unit').on(table.staff_id, table.organization_unit_id),
+  index('idx_app_staff_units_tenant').on(table.tenant_id),
+  index('idx_app_staff_units_staff').on(table.staff_id),
+  index('idx_app_staff_units_unit').on(table.organization_unit_id),
+  foreignKey({ name: 'fk_app_staff_units_tenant', columns: [table.tenant_id], foreignColumns: [sysTenants.id] }).onDelete('restrict'),
+  foreignKey({ name: 'fk_app_staff_units_staff', columns: [table.staff_id], foreignColumns: [appStaff.id] }).onDelete('cascade'),
+  foreignKey({ name: 'fk_app_staff_units_unit', columns: [table.organization_unit_id], foreignColumns: [appOrganizationUnits.id] }).onDelete('restrict'),
 ]);
